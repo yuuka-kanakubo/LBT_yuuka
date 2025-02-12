@@ -1,0 +1,57 @@
+################################################################
+#
+# Input parameters for LBT
+#
+# Do NOT change the name of each flag/parameter
+# Leave an empty space " " before and after each "="
+#
+################################################################
+
+# flags
+
+flag:vacORmed = 1        # 0: in-vaccumm; 1: in-medium
+flag:bulkType = 2        # 1: OSU-hydro; 2: CCNU-hydro; 0: brick with temperature "temperature" and length "length"
+flag:initHardFlag = 2    # 1: initialize jet parton within LBT; 2: read parton list from file
+flag:flagJetX = 0        # 0: do nothing; 1: keep momentum but reset jet position within LBT
+flag:fixMomentum = 0     # 1: use fix momemtum; 0: sample momentum uniformly between "pT_min" and "pT_max"
+flag:fixPosition = 1     # 1: initialize partons at (0,0,0); 0: sample based on data file "tables/mc_glauber.dat"
+flag:Kprimary = 0         # 0: keep all partons; 1: keep leading jet parton only (switch off other partons)
+flag:KINT0 = 1           # 0: no radiation (elastic only); 1: elastic + inelastic; 2: inelastic only
+
+flag:outFormat = 1       # 1: use complete output format; 2: use simplied output format for JETSCAPE
+flag:heavyOut = 0        # 0: do not write out heavy quark; 1: write out heavy quark
+flag:lightOut = 1        # 0: do not write out light parton; 1: write out light parton
+
+# parameters
+
+para:nEvent = 100         # number of events
+para:nParton = 10000        # number of parton being initialized per event
+para:parID = 21           # 1-d, 2-u, 3-s, 4-c, 21-g (b quark is not included yet)
+para:tau0 = 0.6          # initial time for parton initialization
+para:tauend = 25.0        # end time for LBT evolution
+para:dtau = 0.1          # time step interval of LBT evolution
+para:temperature = 0.30  # temperature of the brick, only valide when "bulkType = 0"
+para:hydro_Tc = 0.165     # temperature for stopping medium modification if hydro is used
+para:Ecut = 0.0          # energy cut of the recoiled partons, no evolution below cut
+
+# for jet parton initialization
+ 
+para:pT_min = 0.0        # lower boundary for pT if "fixMomentum=0"
+para:pT_max = 300.0        # upper boundary for pT if "fixMomentum=0"
+para:eta_cut = 0.5       # sample initial momentum between -eta_cut and eta_cut if "fixMomentum=0"
+
+# if users want to use fixMomentum=1
+
+para:ener = 30.0       # initial energy
+para:mass = 4.19       # mass of partons
+
+
+# K-factor tunings
+para:alpha_s = 0.15     # fixed strong coupling constant
+para:KPamp = 5.0;      # amplitude of Kp
+para:KPsig = 5.0;      # width of Kp
+para:KTamp = 0.0;      # amplitude of KT
+para:KTsig = 0.05;     # width of KT (times hydro_Tc)
+para:scaleAK = 2.0;    # scale in running coupling
+
+################################################################

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+module load cmake-3.14.0
+
+[ -d build ] && echo 'Directory already exsits' || mkdir build
+cd build
+cmake ..
+make
+mv src/LBT ../
+cd ..
+
+
+
