@@ -1,0 +1,47 @@
+
+############################################################
+Parameters for this run
+flag:initHardFlag: 2
+flag:flagJetX: 0
+flag:fixMomentum: 0
+flag:fixPosition: 1
+flag:vacORmed: 1
+flag:bulkType: 2
+flag:Kprimary: 0
+flag:KINT0: 1
+flag:outFormat: 1
+flag:heavyOut: 0
+flag:lightOut: 1
+para:nEvent: 100
+para:nParton: 10000
+para:parID: 21
+para:tau0: 0.6
+para:tauend: 25
+para:dtau: 0.1
+para:temperature: 0.3
+para:alpha_s: 0.15
+para:hydro_Tc: 0.165
+para:pT_min: 0
+para:pT_max: 300
+para:eta_cut: 0.5
+para:ener: 30
+para:mass: 4.19
+para:KPamp: 5
+para:KPsig: 5
+para:KTamp: 0
+para:KTsig: 0.00825
+############################################################
+
+Parameter check passed
+the program starts at:
+Current Time: 2025-02-14 04:54:40
+  
+n  np
+100  703
+the program ends at:
+Current Time: 2025-02-14 04:54:55
+the program costs:
+15s: 0h 0m 15s
+counth100 0
+ EOF reached in CCNU-hydro file
+ Max tau in the hydro file:    12.899999999999999     
