@@ -151,7 +151,7 @@ int main(int argc, char* argv[]){
 
                 Vfrozen[1][i]=Vfrozen[1][i]+P[1][i]/P[0][i]*Vfrozen[0][i];
                 Vfrozen[2][i]=Vfrozen[2][i]+P[2][i]/P[0][i]*Vfrozen[0][i];
-                Vfrozen[3][i]=Vfrozen[3][i]+P[3][i]/P[0][i]*Vfrozen[0][i];
+                Vfrozen[3][i]=0.0;
 
                 V[1][i]=Vfrozen[1][i];
                 V[2][i]=Vfrozen[2][i];
