@@ -151,7 +151,7 @@ int main(int argc, char* argv[]){
 
                 Vfrozen[1][i]=Vfrozen[1][i]+P[1][i]/P[0][i]*Vfrozen[0][i];
                 Vfrozen[2][i]=Vfrozen[2][i]+P[2][i]/P[0][i]*Vfrozen[0][i];
-                Vfrozen[3][i]=0.0;
+                Vfrozen[3][i]=Vfrozen[3][i]+P[3][i]/P[0][i]*Vfrozen[0][i];
 
                 V[1][i]=Vfrozen[1][i];
                 V[2][i]=Vfrozen[2][i];
@@ -216,7 +216,7 @@ int main(int argc, char* argv[]){
             if(abs(KATT1[i])==4) iHQ+=1;
             EfTot=EfTot+P[0][i];
         }	
-        int nnn=np-ip-iHQ;
+        int nnn=np-ip-iHQ;// np: # of input partons, 
         int ip0=0;
         for(int i=2;i<=np;i++) {
             if(P0[0][i] < cutOut) ip0+=1;
