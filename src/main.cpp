@@ -32,7 +32,7 @@ using namespace std;
 
 #include "common.h"
 #include "setParameter.cpp"
-#include "LBT.cpp"
+#include "LBTcl.h"
 #include "fnc.cpp"
 
 int main(int argc, char* argv[]){  					
@@ -72,8 +72,10 @@ int main(int argc, char* argv[]){
 
 
 //...initialize the random number generator
-    srand((unsigned)time(NULL));
+    srand(123);
+    //srand((unsigned)time(NULL));
     NUM1=-1*rand();
+cout << "rand() " << NUM1 << endl;
 //    NUM1=-33;
 
     struct tm *local_start;
@@ -149,6 +151,8 @@ int main(int argc, char* argv[]){
 
                 fpList >> dummyInt >> KATT1[i] >> P[1][i] >> P[2][i] >> P[3][i] >> P[0][i] >> Vfrozen[1][i] >> Vfrozen[2][i] >> Vfrozen[3][i] >> Vfrozen[0][i];
 
+		//Propagating initial partons till its formation location in transverse
+		//==============================
                 Vfrozen[1][i]=Vfrozen[1][i]+P[1][i]/P[0][i]*Vfrozen[0][i];
                 Vfrozen[2][i]=Vfrozen[2][i]+P[2][i]/P[0][i]*Vfrozen[0][i];
                 Vfrozen[3][i]=0.0;
@@ -161,15 +165,15 @@ int main(int argc, char* argv[]){
   
                 // adjust momentum to fit energy and mass
 
-                if(abs(KATT1[i])==1||abs(KATT1[i])==2||abs(KATT1[i])==3||abs(KATT1[i])==21)
-                {
-                P[4][i]=0.0;
-                P[0][i]=sqrt(P[1][i]*P[1][i]+P[2][i]*P[2][i]+P[3][i]*P[3][i]+P[4][i]*P[4][i]);
-                P[5][i]=sqrt(P[1][i]*P[1][i]+P[2][i]*P[2][i]);
-                WT[i]=1.0;
-                }
+		if(abs(KATT1[i])==1||abs(KATT1[i])==2||abs(KATT1[i])==3||abs(KATT1[i])==21)
+		{
+			P[4][i]=0.0;
+			P[0][i]=sqrt(P[1][i]*P[1][i]+P[2][i]*P[2][i]+P[3][i]*P[3][i]+P[4][i]*P[4][i]);
+			P[5][i]=sqrt(P[1][i]*P[1][i]+P[2][i]*P[2][i]);//transverse momentum
+			WT[i]=1.0;
+		}
 
-                EiTot=EiTot+P[0][i];
+                EiTot=EiTot+P[0][i];//Counting total energy in initial partons.
 
                 for(int j=0;j<=3;j++) Prad[j][i]=P[j][i];
   
@@ -184,24 +188,24 @@ int main(int argc, char* argv[]){
             // reset position information if necessary
             if(flagJetX==1) setJetX(numInitXY);
 
-        } 
+        }//Loop for reading initial partons. 
 
-        np=nj;
+        np=nj;//Number of initial partons.
         
-//...end initilization of jet parton
+	//...end initilization of jet parton
+	//...time evolution in LBT if in medium
 
-//...time evolution in LBT if in medium
-
-        if(vacORmed==1) {
+        if(vacORmed==1) {//vacuum or medium. 1: medium, 0: vacuum
 		
             for(double ti=time0+dt;ti<=timend+epsilon;ti=ti+dt) {
 
-                LBT(n,ti);
+		    LBTcl lbt_;
+		    lbt_.LBTstep(n,ti);//n: event number,  ti: time in timestep
 
             }
         }
 
-//...end of time evolution in LBT
+	//...end of time evolution in LBT
 
         numEvent=numEvent+1;		
 
@@ -313,6 +317,7 @@ int main(int argc, char* argv[]){
     cout << cost << "s:" << " " << nh << "h" << " " << nm << "m" << " " << ns << "s" << endl;	
     cout << "counth100" << " " << counth100 <<endl;
     
+    return 0;
 }
 
 

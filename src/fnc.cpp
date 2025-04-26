@@ -180,7 +180,8 @@ float ran0(long *idum)
   int j;
   long k;
   //##############
-  static long seed_w=(unsigned) time(NULL);
+  //static long seed_w=(unsigned) time(NULL);
+  static long seed_w=123;
  
   static long idum2=seed_w;
   //##############
