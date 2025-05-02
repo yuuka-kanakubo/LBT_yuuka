@@ -1,5 +1,6 @@
 add_library(
 		LBT_LIB STATIC
+		LBTConfig.cpp
 		LBTcl.cpp
 	   )
 

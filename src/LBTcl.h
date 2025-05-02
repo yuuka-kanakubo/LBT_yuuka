@@ -92,5 +92,7 @@ public:
   LBTcl(){};
   ~LBTcl(){};
 
+//  void LBTstep(int &n, double &ti, int &np);
+
 };
 #endif
