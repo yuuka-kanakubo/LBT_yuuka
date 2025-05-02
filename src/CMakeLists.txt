@@ -1,5 +1,6 @@
 add_library(
 		LBT_LIB STATIC
+		main_functions.cpp
 		LBTConfig.cpp
 		LBTcl.cpp
 	   )
@@ -15,5 +16,5 @@ add_executable(${PROJECT_NAME}
   )
 target_link_libraries(${PROJECT_NAME} LBT_LIB)
 
-# install compiled binary
+
 install (TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME})
