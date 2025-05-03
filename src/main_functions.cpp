@@ -8,7 +8,44 @@ void setJetX(int numInitXY){};
 void LBT(int eventID, double time, LBTConfig& config){};
 double alphas0(int Kalphas, double T){return 0.0;};
 double DebyeMass2(int Kqhat0, double alphas, double T){return 0.0;};
-//double ran0(){}//somehow used in jet propagation after readout.
+
+float ran0(long *idum){
+	int j;
+	long k;
+	//##############
+	//static long seed_w=(unsigned) time(NULL);
+	static long seed_w=123;
+
+	static long idum2=seed_w;
+	//##############
+	static long iy=0;
+	static long iv[NTAB];
+	float temp;
+
+	if (*idum <= 0) { 
+		if (-(*idum) < 1) *idum=1; 
+		else *idum = -(*idum);
+		for (j=NTAB+7;j>=0;j--) { 
+			k=(*idum)/IQ1;
+			*idum=IA1*(*idum-k*IQ1)-k*IR1;
+			if (*idum < 0) *idum += IM1;
+			if (j < NTAB) iv[j] = *idum;
+		}
+		iy=iv[0];
+	}
+	k=(*idum)/IQ1; 
+	*idum=IA1*(*idum-k*IQ1)-k*IR1; 
+	if (*idum < 0) *idum += IM1; 
+	k=idum2/IQ2;
+	idum2=IA2*(idum2-k*IQ2)-k*IR2; 
+	if (idum2 < 0) idum2 += IM2;
+	j=iy/NDIV; 
+	iy=iv[j]-idum2; 
+	iv[j] = *idum; 
+	if (iy < 1) iy += IMM1;
+	if ((temp=AM*iy) > RNMX) return RNMX; 
+	else return temp;
+}
 
 bool initialize(LBTConfig& config, int argc, char* argv[], std::time_t& time_start) {
 	config.loadFromFile(argv[1]);
@@ -102,6 +139,30 @@ void open_output(int argc, char* argv[],
 }
 
 
+void get_set_ready(std::vector <Particle>& part_event, LBTConfig& config){
+
+	for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+		for(int dim=1; dim<=3; dim++){
+			it->Vfrozen[dim]=it->Vfrozen[dim]+(it->P[dim]/it->P[0])*it->Vfrozen[0];
+			it->V[dim]=it->Vfrozen[dim];
+		}
+		it->V[0]=-std::log(1.0-ran0(&config.rng.NUM1));
+		it->Vfrozen[3]=0.0;
+		it->V[3]=0.0;
+
+                // adjust momentum to fit energy and mass
+		if(abs(it->KATT)==1||abs(it->KATT)==2||abs(it->KATT)==3||abs(it->KATT)==21){
+			it->P[4]=0.0;
+			it->P[0]=sqrt(it->P[1]*it->P[1]+it->P[2]*it->P[2]+it->P[3]*it->P[3]+it->P[4]*it->P[4]);
+			it->P[5]=sqrt(it->P[1]*it->P[1]+it->P[2]*it->P[2]);//transverse momentum
+			it->WT=1.0;
+		}
+	}
+	return;
+}
+
+
+
 void runLBT(std::ifstream& fpList,
 		std::ofstream& outHQ,
 		std::ofstream& outLightPos,
@@ -126,12 +187,11 @@ void runLBT(std::ifstream& fpList,
 			jetInitialize(config.counter.numInitXY);
 		} else {
 			int dummyInt;
-			if (fpList.eof()) break;
 
 			fpList >> dummyInt >> nj;
 			std::string line;
 			int count = 0;
-			std::getline(fpList, line); // consume rest of header
+			if(!std::getline(fpList, line)) break; // consume rest of header
 
 			for (int i = 0; i < nj; ++i) {
 				if (!std::getline(fpList, line)) break;
@@ -151,18 +211,31 @@ void runLBT(std::ifstream& fpList,
 			}
 
 			if (nj != count) {
-				std::cerr << "ERROR: Input format mismatch in " << std::endl;
+				std::cerr << "ERROR: Input format mismatch in initial parton file." << std::endl;
+				std::cerr << "       nj!=count  " << nj << " != " << count << std::endl;
 				std::exit(EXIT_FAILURE);
 			}
+			count = 0;
 
 			// NOTE: particle list is not yet stored in a central manager
 			// It can be returned or handled globally
+			
 		}//End of reading one event info
 
 		np = nj;
 
+		//1. propagation of partons to formation time, 2. energy momentum adjustment.
+		get_set_ready(partons_event, config);
+
+		//CHECKING
+		std::cout << "np " << np << std::endl;
+		std::cout << "(int) partons_event.size() " << (int) partons_event.size() << std::endl;
+		for (auto it = partons_event.begin(); it != partons_event.end(); ++it) {
+			it->Print();
+		}
+
+
 		// Time evolution (skipping detailed LBT logic)
-		//TODO add 1. propagation of partons to formation time, 2. energy momentum adjustment.
 
 
 		if (config.medium.vacORmed == 1) {

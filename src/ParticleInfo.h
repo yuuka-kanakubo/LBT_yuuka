@@ -1,10 +1,11 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
+#include <iomanip>
 
 struct Particle {
-        double P[4] = {0.0};        // Four-momentum (E, px, py, pz)
+        double P[6] = {0.0};        // Four-momentum (E, px, py, pz)
         double V[4] = {0.0};        // Position (t or tau, x, y, z)
-        double P0[4] = {0.0};       // Negative particle momentum
+        double P0[6] = {0.0};       // Negative particle momentum
         double V0[4] = {0.0};       // Negative particle position
         int CAT = 0;                // Category: 0=active, 1=free streaming, 2=recoiled, 4=radiated
         int CAT0 = 0;               // Negative particle category
@@ -25,5 +26,30 @@ struct Particle {
         int mom1 = -1;  // Index of primary mother parton
         int mom2 = -1;  // Index of secondary (e.g. recoil) mother parton
         int index = -1;  // Unique ID for this particle in the vector
+
+	void Print(){
+		std::cout 
+			<< std::setw(6)  << this->KATT
+			<< std::endl
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[0]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[1]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[2]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[3]
+
+			<< std::endl
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[0]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[1]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[2]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[3]
+
+			<< std::endl
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[0] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[1] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[2] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[3] 
+			<< std::endl;
+
+	}
+
 };
 #endif

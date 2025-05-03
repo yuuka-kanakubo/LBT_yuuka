@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
 
 	std::time_t time_start;
 	if (!initialize(config, argc, argv, time_start)) return EXIT_FAILURE;
+	std::cout << "The end of initialize () " << std::endl;
 
 	std::ifstream fpList;
 	std::ofstream outHQ, outLightPos, outLightNeg;
