@@ -6,6 +6,7 @@
 #include <math.h>
 #include "LBTConfig.h"
 #include "ParticleInfo.h"
+#include "LBTcl.h"
 
 #define IM1 2147483563
 #define IM2 2147483399

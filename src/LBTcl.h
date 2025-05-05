@@ -1,98 +1,99 @@
-#ifndef LBTcl_H
-#define LBTcl_H
+#include <vector>
+#include <cmath>
+#include "ParticleInfo.h"
+#include "LBTConfig.h"
 
 
 class LBTcl{
 
-  int CT;                        //collision type 1 2 3 13 4 5 6 7 8
-  int KATTC0;                    //flavor code 1/d 2/u 3/s -1/dbar -2/ubar -3/sbar 21/gluon 
-  int KATT2;
-  int KATT3;
-  int KATT30;
-		
-  double RTE;                    //scattering rate (energy temperature)
-  double E;                      //parton energy
-  double PLen;                   //parton momentum
-  double T;                      //local temperature		
+	private:
 
-  double T1;                     //index for difference method
-  double T2;
-  double E1;
-  double E2;
-  int iT1;
-  int iT2;
-  int iE1;
-  int iE2;	
-		
-  int nrad;
-  int idlead;
-  int idlead1;
-  int idlead2;
-  double Xtau;                   //....................main & titau	
-  double Vx;
-  double Vy;		
-  double Veta;
+		LBTConfig& config;
+		double computeScatteringRate(int flavor, double PLen, double T);
+		double computeRadiationProbability(Particle &p, double T, double E);
+		void handleElasticCollision(Particle &p, std::vector<Particle> &particles);
+		void handleRadiation(Particle &p, std::vector<Particle> &particles, int &icl23, int &iclrad);
+		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
+		double computeCollisionProbability(
+				const Particle &p,
+				double qhat,
+				double pLen,
+				double T,
+				double fraction
+				);
 
-  double tcar;                   //....................t x y z in Cartesian coordinate this is for the radiation process
-  double xcar;		
-  double ycar;
-  double zcar;					
+		void titau(double ti,
+				const std::array<double, 4> &vf,
+				const std::array<double, 4> &vp,
+				const std::array<double, 4> &p0,
+				double &Vx, double &Vy, double &Veta, double &Xtau) {
 
-  double tcar0;                   //....................t x y z in Cartesian coordinate this is for the radiation process
-  double xcar0;		
-  double ycar0;
-  double zcar0;
+			double gamma = 1.0 / sqrt(1.0 - (vf[1] * vf[1] + vf[2] * vf[2]));
 
+			double mt = sqrt(p0[1]*p0[1] + p0[2]*p0[2]);
+			double Yp = 0.5 * log((p0[0] + p0[3]) / (p0[0] - p0[3]));
 
-  double rans;
+			double etas = vp[3];
+			double etaf = atanh(vf[3]) + etas;
 
-  int KATTx;
-  int KATTy;
+			double pper = mt;  // same as sqrt(p0[1]^2 + p0[2]^2)
+			double vper = sqrt(vf[1]*vf[1] + vf[2]*vf[2]);
+			double pvper = p0[1]*vf[1] + p0[2]*vf[2];
 
-  double Ejp;
-  double Elab;
-		
-  double qt;
-		
-  double px0;
-  double py0;		
-  double pz0;
+			Vx   = p0[1] / (pper * cosh(Yp - etas));
+			Vy   = p0[2] / (pper * cosh(Yp - etas));
+			Veta = tanh(Yp - etas) / ti;
 
-  double Ncoll22;                    //...................average number of elastic scattering for particle i in the current step  
-  int Nscatter;                   //...................number of elastic scattering for particle i in the current step
+			Xtau = (gamma * mt * cosh(Yp - etaf) - pvper * vper) / (mt * cosh(Yp - etas));
+			return;
+		}
 
+		void trans(const std::array<double, 4> &v, std::array<double, 4> &p) {
+			double vv = sqrt(v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+			if (vv < 1e-12) return;
 
-  int free=0;
-  int free0=0;
-  double fraction=0.0;
-  double fraction0=0.0;
-  double vc0b[4]={0.0};             //flow velocity     
-  double pMag,vMag,flowFactor;
+			double ga = 1.0 / sqrt(1.0 - vv * vv);
+			double ppar = p[1]*v[1] + p[2]*v[2] + p[3]*v[3];
+			double gavv = (ppar * ga / (1.0 + ga) - p[0]) * ga;
 
-  double kt2;
-  
-  double vp0[4]={0.0};
-  double p0temp[4]={0.0}; 
+			p[0] = ga * (p[0] - ppar);
+			p[1] += v[1] * gavv;
+			p[2] += v[2] * gavv;
+			p[3] += v[3] * gavv;
+		}
 
-  double p0temp1=0.0; 
-  double p0temp2=0.0; 
-		
-  double pcx[4]={0.0};
-  double pcy[4]={0.0};		
+		void transback(const std::array<double, 4> &v, std::array<double, 4> &p) {
+			double vv = sqrt(v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+			if (vv < 1e-12) return;
 
-  double pcx1[4]={0.0};
-  double pcy1[4]={0.0};		
+			double ga = 1.0 / sqrt(1.0 - vv * vv);
+			double ppar = p[1]*v[1] + p[2]*v[2] + p[3]*v[3];
+			double gavv = (-ppar * ga / (1.0 + ga) - p[0]) * ga;
 
-  // for heavy quark
-  double dt_lrf,maxFncHQ,Tdiff,lim_low,lim_high,lim_int;
-  double probCol,probRad,probTot;
+			p[0] = ga * (p[0] + ppar);
+			p[1] -= v[1] * gavv;
+			p[2] -= v[2] * gavv;
+			p[3] -= v[3] * gavv;
+		}
 
 
-public:
-  LBTcl(){};
-  ~LBTcl(){};
 
-//  void LBTstep(int &n, double &ti, int &np);
+
+	public:
+
+
+		void LBT(std::vector<Particle> &particles, double ti, int &icl23, int &iclrad);
+
+		LBTcl(LBTConfig& config_in):config(config_in){};
+		~LBTcl(){};
 
 };
-#endif
+
+extern "C" {
+	void read_ccnu_(char *dataFN_in, int len1);
+	void hydroinfoccnu_(double *Ct, double *Cx, double *Cy, double *Cz, double *Ctemp, double *Cvx, double *Cvy, double *Cvz, int *Cflag);
+
+	void sethydrofilesez_(int *dataID_in, char *dataFN_in, int *ctlID_in, char *ctlFN_in, int *bufferSize, int len1, int len2);
+	void readhydroinfoshanshan_(double *t, double *x, double *y, double *z, double *e, double *s, double *temp, double *vx, double *vy, double *vz, int *flag);
+}
+
