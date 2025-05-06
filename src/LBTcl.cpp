@@ -328,8 +328,9 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		double zcar = p.V[3];
 
 		// Query hydro fields
-		double temp, VX, VY, VZ, ed, sd;
-		int hydro_ctl;
+		double VX, VY, VZ, ed, sd;
+		double &temp = (p.CAT!=5)? config.medium.temp0: config.medium.temp00; 
+		int hydro_ctl = 0;
 
 		if (config.medium.bulkFlag == 1) {
 			readhydroinfoshanshan_(&tcar,&xcar,&ycar,&zcar,&ed,&sd,&temp,&VX,&VY,&VZ,&hydro_ctl);
@@ -379,8 +380,9 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		double ycar = p.V[2];
 
 		// Query hydro fields
-		double temp, VX, VY, VZ, ed, sd;
-		int hydro_ctl;
+		double VX, VY, VZ, ed, sd;
+		double &temp = (p.CAT!=5)? config.medium.temp0: config.medium.temp00; 
+		int hydro_ctl = 0;
 
 		if (config.medium.bulkFlag == 1) {
 			readhydroinfoshanshan_(&tcar,&xcar,&ycar,&zcar,&ed,&sd,&temp,&VX,&VY,&VZ,&hydro_ctl);
@@ -415,7 +417,7 @@ return;
 
 
 
-void LBTcl::LBT(std::vector<Particle> &part_event, double ti, int &icl23, int &iclrad) {
+void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     int np_snapshot = part_event.size();  // snapshot of part_event at start of this step "np0"
 
     // Assign indices to existing part_event for ancestry tracking
@@ -427,17 +429,21 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti, int &icl23, int &i
     for (int i = 0; i < (int)part_event.size(); ++i) {
         Particle &p = part_event[i];
 
+std::cout << __FILE__ << "(" << __LINE__ << ")" << "i, Vfrozen " << i << " " << p.Vfrozen[0] << std::endl;
         // Skip frozen or inactive part_event
         if (!p.isActive || p.Vfrozen[0] >= ti) continue;
 
         int free = 0;
         double fraction = 0.0;
 
+std::cout << __FILE__ << "(" << __LINE__ << ")" << "Before propagation " << std::endl;
 p.Print();
-exit(1);
 
         // Propagate parton
 	this->propagateParticle(p, ti, free, fraction);
+
+std::cout << __FILE__ << "(" << __LINE__ << ")" << "After propagation " << std::endl;
+p.Print();
 
 	if (p.CAT != 1) {
 

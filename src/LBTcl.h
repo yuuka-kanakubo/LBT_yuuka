@@ -1,3 +1,5 @@
+#ifndef LBTCL_H
+#define LBTCL_H
 #include <vector>
 #include <cmath>
 #include "ParticleInfo.h"
@@ -82,7 +84,7 @@ class LBTcl{
 	public:
 
 
-		void LBT(std::vector<Particle> &particles, double ti, int &icl23, int &iclrad);
+		void LBT(std::vector<Particle> &particles, double ti);
 
 		LBTcl(LBTConfig& config_in):config(config_in){};
 		~LBTcl(){};
@@ -96,4 +98,4 @@ extern "C" {
 	void sethydrofilesez_(int *dataID_in, char *dataFN_in, int *ctlID_in, char *ctlFN_in, int *bufferSize, int len1, int len2);
 	void readhydroinfoshanshan_(double *t, double *x, double *y, double *z, double *e, double *s, double *temp, double *vx, double *vy, double *vz, int *flag);
 }
-
+#endif

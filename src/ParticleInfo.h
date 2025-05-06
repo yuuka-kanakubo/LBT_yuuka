@@ -24,13 +24,16 @@ struct Particle {
 	void Print(){
 		std::cout 
 			<< std::setw(6)  << this->KATT
+			<< std::setw(6)  << this->CAT
 			<< std::endl
+			<< "P  "
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[0]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[1]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[2]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[3]
 
 			<< std::endl
+			<< "V  "
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[0]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[1]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[2]

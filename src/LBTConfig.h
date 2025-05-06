@@ -90,7 +90,6 @@ struct Counters {
     int n_sp1 = 0;
     int n_sp2 = 0;
     int loopN = 1000;
-    int numInitXY = 0;
     int counth100 = 0;
 };
 
