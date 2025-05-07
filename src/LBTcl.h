@@ -18,7 +18,7 @@ class LBTcl{
 		void handleRadiation(Particle &p, std::vector<Particle> &particles, int &icl23, int &iclrad);
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
-				const Particle &p,
+				Particle &p,
 				double qhat,
 				double pLen,
 				double T,

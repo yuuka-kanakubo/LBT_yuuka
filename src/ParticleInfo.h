@@ -18,6 +18,8 @@ struct Particle {
         double mass = 0.0;          // Mass (0 for light partons, positive for heavy quarks)
         bool isPrimary = false;     // True if parton is among the original initial partons (instead of nj)
         bool isActive = false;     // True if parton exist, and not a past history.
+        double tot_el_rate = 0.0;     // Total elastic scattering rate (2->2)
+        double Xtau_keep = 0.0;     // Xtau calculated by titau before propagation.
         int mom1 = -1;  // Index of primary mother parton
         int mom2 = -1;  // Index of secondary (e.g. recoil) mother parton
         int index = -1;  // Unique ID for this particle in the vector

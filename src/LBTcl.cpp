@@ -23,6 +23,7 @@ double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const dou
 	double RTE;
         int flavor = p.KATT;
 	lam(flavor, RTE, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
+        p.tot_el_rate=RTE;
 	//Assuming lam returned T1, T2, E1, E2, iT1, iT2, iE1, iE2.
 	//They will be used in lam2 to get RTE1 and RTE2.
 
@@ -100,25 +101,28 @@ return 0.;
 
 
 double LBTcl::computeCollisionProbability(
-    const Particle &p,
-    double qhat,
-    double pLen,
-    double T,
-    double fraction
+    Particle &p,
+    const double PLen_in,
+    const double T_in,
+    const double fraction,
+    const double probRad
 ) {
-    double runKT = 1.0;
-//    if (KrunKT == 1) {
-//        runKT = log(1.0 + pLen / (T + 1e-12));  // avoid log(0)
-//    }
-//
-//    double KTfactor = 1.0;
-//    if (abs(p.KATT) == 4)      KTfactor = 1.0;
-//    else if (abs(p.KATT) == 5) KTfactor = 1.0;
-//    else if (p.KATT == 21)     KTfactor = 9.0 / 4.0;
-//
-//    double probCol = fraction * qhat * runKT * KTfactor * (M_PI / 4.0) / (pLen * T + 1e-12);
-//    return probCol;
-return 0.;
+
+	double dt_lrf = config.clock.dt*p.timedilation;
+	double probCol = (config.clock.tauswitch==0)? fraction*dt_lrf*p.tot_el_rate/base::GEVFM: dt_lrf*p.tot_el_rate*p.Xtau_keep/base::GEVFM;
+
+        //Modify vertices to take into account time-ordering collisions
+	if(config.clock.tauswitch==0) p.V[0]=p.V[0]-fraction*config.clock.dt*p.tot_el_rate/base::GEVFM*sqrt( pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2) )/p.P[0];
+	else p.V[0]=p.V[0]-config.clock.dt*p.tot_el_rate*p.Xtau_keep/base::GEVFM*sqrt(pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2))/p.P[0];
+	//TODO: Is this config.clock.dt -> config.clock.dt * p.timedilation?
+
+	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
+	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
+
+	probCol*=KPfactor*KTfactor*config.lbtinput.runKT;
+	probCol=(1.0-exp(-probCol))*(1.0-probRad);
+
+    return probCol;
 }
 
 
@@ -370,6 +374,7 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 
 		double Vx, Vy, Veta, Xtau;
 		this->titau(ti, vc0, vp, pc0, Vx, Vy, Veta, Xtau);
+		p.Xtau_keep = Xtau;//archived for later use.
 
 		// Update spatial position
 		p.V[1] += config.clock.dt * Vx;
@@ -471,10 +476,14 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "qhat " << qhat << std::endl;
 
                 // Compute probabilities
-                //double probCol = computeCollisionProbability(p, qhat, PLenloc, T, fraction);
                 double probRad = computeRadiationProbability(p, T, Eloc);
+                double probCol = computeCollisionProbability(p, PLenloc, T, fraction, probRad);
 		std::cout << "probRad " << probRad << std::endl;
-//                double probTot = probCol + probRad;
+		std::cout << "probCol " << probCol << std::endl;
+                double probTot = probCol + probRad;
+
+	std::cout << __FILE__ << "(" << __LINE__ << ")" << "After prob calc. " << std::endl;
+	p.Print();
 //
 //                // Sample scattering
 //                if (ran0(&NUM1) < probTot) {

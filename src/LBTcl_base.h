@@ -7,7 +7,7 @@ namespace base{
     static constexpr double CA = 3.0;
     static constexpr double CF = 4.0 / 3.0;
     static constexpr double sctr = 0.1973;  // fm to GeV^-1
-
+    static constexpr double GEVFM = 0.1970;
 
 }
 
