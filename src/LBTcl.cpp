@@ -10,93 +10,82 @@
 
 
 
-double LBTcl::computeScatteringRate(int flavor, double PLen, double T) {
-//	// Lookup tables qhatG/qhatLQ/qhatHQ depending on flavor
-//	// Interpolate based on PLen, T
-//	// Return RTE (rate)
-//
-//	// --- Step 1: Find interpolation points ---
-//	double T1, T2, E1, E2;
-//	int iT1, iT2, iE1, iE2;
-//
-//	// Assuming lam() is available (sets T1, T2, E1, E2 and index iT1, iT2, iE1, iE2)
-//	lam(flavor, /*out*/ T1, T2, E1, E2, iT1, iT2, iE1, iE2);
-//
-//	double RTE1, RTE2;
-//
-//	// --- Step 2: Interpolate in Temperature first ---
-//	if (flavor == 21) {
-//		// Gluon
-//		RTE1 = (qhatG[iT2][iE1] - qhatG[iT1][iE1]) * (T - T1) / (T2 - T1) + qhatG[iT1][iE1];
-//		RTE2 = (qhatG[iT2][iE2] - qhatG[iT1][iE2]) * (T - T1) / (T2 - T1) + qhatG[iT1][iE2];
-//	} else if (abs(flavor) == 4) {
-//		// Heavy quark
-//		RTE1 = (qhatHQ[iT2][iE1] - qhatHQ[iT1][iE1]) * (T - T1) / (T2 - T1) + qhatHQ[iT1][iE1];
-//		RTE2 = (qhatHQ[iT2][iE2] - qhatHQ[iT1][iE2]) * (T - T1) / (T2 - T1) + qhatHQ[iT1][iE2];
-//	} else {
-//		// Light quark
-//		RTE1 = (qhatLQ[iT2][iE1] - qhatLQ[iT1][iE1]) * (T - T1) / (T2 - T1) + qhatLQ[iT1][iE1];
-//		RTE2 = (qhatLQ[iT2][iE2] - qhatLQ[iT1][iE2]) * (T - T1) / (T2 - T1) + qhatLQ[iT1][iE2];
-//	}
-//
-//	// --- Step 3: Interpolate in Energy (PLen) ---
-//	double qhat_over_T3 = (RTE2 - RTE1) * (PLen - E1) / (E2 - E1) + RTE1;
-//
-//	// --- Step 4: Apply K-factors ---
-//	double runKT = fixAlphas / 0.3;  // running coupling factor
-//	double KPfactor = 1.0 + KPamp * exp(-PLen * PLen / (2.0 * KPsig * KPsig));
-//	double KTfactor = 1.0 + KTamp * exp(-pow(T - hydro_Tc, 2) / (2.0 * KTsig * KTsig));
-//
-//	double Kfactor = KPfactor * KTfactor * KTfactor * runKT * preKT;  // full correction
-//
-//	qhat_over_T3 *= Kfactor;  // Apply correction
-//
-//	// --- Step 5: Multiply by T^3 to get real qhat ---
-//	return qhat_over_T3 * pow(T, 3);  // Final scattering rate (momentum broadening)
-return 0.;
+double LBTcl::computeScatteringRate(const int flavor, const double PLen_in, const double T_in) {
+	// Lookup tables qhatG/qhatLQ/qhatHQ depending on flavor
+	// Interpolate based on PLen(E), T
+	// Return RTE (rate)
+
+	// --- Step 1: Find interpolation points ---
+	double T1, T2, E1, E2;
+	int iT1, iT2, iE1, iE2;
+
+	// Assuming lam() is available (sets T1, T2, E1, E2 and index iT1, iT2, iE1, iE2)
+	double RTE;
+	lam(flavor, RTE, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
+	//Assuming lam returned T1, T2, E1, E2, iT1, iT2, iE1, iE2.
+	//They will be used in lam2 to get RTE1 and RTE2.
+
+	// --- Step 2: Interpolate in temperature (T_in) ---
+	double RTE1, RTE2;
+	lam2(flavor, RTE1, RTE2, T_in, T1, T2, iT1, iT2, iE1, iE2);
+
+	// --- Step 3: Interpolate in Energy (PLen) ---
+	double qhat_over_T3 = (RTE2 - RTE1) * (PLen_in - E1) / (E2 - E1) + RTE1;
+
+	// --- Step 4: Apply K-factors ---
+	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
+	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
+
+	double Kfactor = KPfactor * KTfactor * KTfactor * config.lbtinput.runKT * config.lbtinput.preKT;  // full correction
+
+	qhat_over_T3 *= Kfactor;  // Apply correction
+
+	// --- Step 5: Multiply by T^3 to get real qhat ---
+	return qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)
 }
 
 
-double LBTcl::computeRadiationProbability(Particle &p, double T, double E) {
-//	//Calculate the probability that a radiation event happens for the current particle over time dt_lrf.
-//	//Use radng[i] from the original code, which tracks average number of gluons radiated.
-//	//Need to use heavy quark or light parton radiation tables, e.g., nHQgluon().
-//	// Return probability
-//
-//	// --- Inputs: particle p, local temperature T, energy E ---
-//
-//	// Calculate running alphas
-//	double alpha_s = alphas0(Kalphas, T);  // Assuming alphas0() computes coupling
-//	double runKT = fixAlphas / 0.3;         // running coupling scaling
-//
-//	// Calculate K-factors
-//	double KTfactor = 1.0 + KTamp * exp(-pow(T - hydro_Tc, 2) / (2.0 * KTsig * KTsig));
-//
-//	// Local interaction time
-//	double dt_lrf = dt * sqrt(1.0 - pow(p.vcfrozen[1], 2) - pow(p.vcfrozen[2], 2) - pow(p.vcfrozen[3], 2));
-//	p.Tint_lrf += dt_lrf;
-//
-//	// --- Update expected number of gluons radiated ---
-//	if (p.KATT == 21) {
-//		// Gluon: need 1/2 suppression
-//		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, maxFncHQ) * KTfactor * runKT / 2.0;
-//	} else {
-//		// Quarks
-//		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, maxFncHQ) * KTfactor * runKT;
-//	}
-//
-//	// --- Phase space limitation ---
-//	double lim_low = sqrt(6.0 * M_PI * alpha_s) * T / E;
-//	double lim_high = (abs(p.KATT) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
-//	double lim_int = lim_high - lim_low;
-//
-//	// --- Final radiation probability ---
-//	if (lim_int > 0.0) {
-//		return 1.0 - exp(-p.radng);
-//	} else {
-//		return 0.0;
-//	}
-//
+double LBTcl::computeRadiationProbability(Particle &p, const double T, const double E) {
+	//Calculate the probability that a radiation event happens for the current particle over time dt_lrf.
+	//Use radng[i] from the original code, which tracks average number of gluons radiated.
+	//Need to use heavy quark or light parton radiation tables, e.g., nHQgluon().
+	// Return probability
+
+	// --- Inputs: particle p, local temperature T, energy E ---
+
+	// Calculate running alphas
+	double alpha_s = alphas0(config.physics.Kalphas, T);  // Assuming alphas0() computes coupling
+
+	// Calculate K-factors
+	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
+
+	// Local interaction time
+	double dt_lrf = config.clock.dt * sqrt(1.0 - pow(p.vcfrozen[1], 2) - pow(p.vcfrozen[2], 2) - pow(p.vcfrozen[3], 2));
+	p.Tint_lrf += dt_lrf;
+
+	// --- Update expected number of gluons radiated ---
+	if (p.KATT == 21) {
+		// Gluon: need 1/2 suppression
+		double max_N;
+		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT / 2.0;
+	} else {
+		// Quarks
+		double max_N;
+		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT;
+	}
+
+	// --- Phase space limitation ---
+	double lim_low = sqrt(6.0 * M_PI * alpha_s) * T / E;
+	double lim_high = (abs(p.KATT) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
+	double lim_int = lim_high - lim_low;
+
+	// --- Final radiation probability ---
+	if (lim_int > 0.0) {
+		return 1.0 - exp(-p.radng);
+	} else {
+		return 0.0;
+	}
+
 return 0.;
 }
 
@@ -108,7 +97,7 @@ double LBTcl::computeCollisionProbability(
     double T,
     double fraction
 ) {
-//    double runKT = 1.0;
+    double runKT = 1.0;
 //    if (KrunKT == 1) {
 //        runKT = log(1.0 + pLen / (T + 1e-12));  // avoid log(0)
 //    }
@@ -429,40 +418,48 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     for (int i = 0; i < (int)part_event.size(); ++i) {
         Particle &p = part_event[i];
 
-std::cout << __FILE__ << "(" << __LINE__ << ")" << "i, Vfrozen " << i << " " << p.Vfrozen[0] << std::endl;
         // Skip frozen or inactive part_event
         if (!p.isActive || p.Vfrozen[0] >= ti) continue;
 
         int free = 0;
         double fraction = 0.0;
 
-std::cout << __FILE__ << "(" << __LINE__ << ")" << "Before propagation " << std::endl;
-p.Print();
+	std::cout << __FILE__ << "(" << __LINE__ << ")" << "Before propagation " << std::endl;
+	p.Print();
 
         // Propagate parton
 	this->propagateParticle(p, ti, free, fraction);
 
-std::cout << __FILE__ << "(" << __LINE__ << ")" << "After propagation " << std::endl;
-p.Print();
+	std::cout << __FILE__ << "(" << __LINE__ << ")" << "After propagation " << std::endl;
+	p.Print();
 
-	if (p.CAT != 1) {
-
-            if (free == 0) {
+	if (p.CAT != 1 && free == 0) {
                 // Boost momentum into local fluid frame
                 std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
                 std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
                 this->trans(vc0, pc0);
-                double E = pc0[0];
-                double PLen = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
+                double Eloc = pc0[0];
+                double PLenloc = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
                 this->transback(vc0, pc0);
-//
-//                // Query medium
-//                double T = p.Tfrozen;
-//                double qhat = computeScatteringRate(p.KATT, PLen, T);
-//
-//                // Compute probabilities
-//                double probCol = computeCollisionProbability(p, qhat, PLen, T, fraction);
-//                double probRad = computeRadiationProbability(p, T, E);
+
+		std::cout << __FILE__ << "(" << __LINE__ << ")" << "vc0" << std::endl;
+		for (const auto& val : vc0) {
+			std::cout << val << std::endl;
+		}
+		std::cout << __FILE__ << "(" << __LINE__ << ")" << "pc0" << std::endl;
+		for (const auto& val : pc0) {
+			std::cout << val << std::endl;
+		}
+
+
+                // Query medium
+                double T = p.Tfrozen;
+                double qhat = computeScatteringRate(p.KATT, PLenloc, T);
+		std::cout << "qhat " << qhat << std::endl;
+
+                // Compute probabilities
+                //double probCol = computeCollisionProbability(p, qhat, PLenloc, T, fraction);
+                double probRad = computeRadiationProbability(p, T, Eloc);
 //                double probTot = probCol + probRad;
 //
 //                // Sample scattering
@@ -476,10 +473,9 @@ p.Print();
 //
 //                // Reset radiation tracker
 //                p.radng = 0.0;
-            }//free ==0
-        }//for positive partons
+            }//positive and free ==0(in medium)
     }//particle loop
-return;
+    return;
 }
 
 

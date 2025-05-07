@@ -31,19 +31,24 @@ struct Particle {
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[1]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[2]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[3]
-
 			<< std::endl
 			<< "V  "
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[0]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[1]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[2]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[3]
-
 			<< std::endl
+			<< "Vfrozen  "
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[0] 
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[1] 
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[2] 
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[3] 
+			<< std::endl
+			<< "vcfrozen  "
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[0] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[1] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[2] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[3] 
 			<< std::endl;
 
 	}

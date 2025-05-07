@@ -13,38 +13,6 @@ void setJetX(int numInitXY){
 	exit(EXIT_FAILURE);
 
 };
-double alphas0(const int Kalphas, const double T){
-	double X;
-	if(Kalphas==1) 
-	{      
-		X=0.3;
-	}else{
-		std::cout << "Currently Kalphas!=1 is not implemented." << std::endl;
-		std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	return X;
-}
-
-
-double DebyeMass2(const LBTConfig &config, const int Kqhat0, const double alphas, const double T){
-
-	double Y;
-	if(Kqhat0==1){
-		Y=4.0*config.pi*alphas*pow(T,2);
-		return Y;
-	}else if(Kqhat0==2){
-		Y=(3.0/2.0)*4.0*config.pi*alphas*pow(T,2);
-		return Y;
-	}else if(Kqhat0==3){
-		Y=1.0;
-		return Y;
-	}else{
-		std::cout << "Currently this is not implemented in the refactored version of LBT." << std::endl;
-		std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-}
 
 float ran0(long *idum){
 	int j;
@@ -247,7 +215,8 @@ bool initialize(LBTConfig& config, int argc, char* argv[], std::time_t& time_sta
 	config.clock.timend = config.clock.tauend;
 	config.clock.time0 = config.clock.tau0;
 	config.physics.alphas = alphas0(config.physics.Kalphas, config.medium.temp0);
-	config.physics.qhat0 = DebyeMass2(config, config.physics.Kqhat0, config.physics.alphas, config.medium.temp0);
+	config.physics.qhat0 = DebyeMass2(config.physics.Kqhat0, config.physics.alphas, config.medium.temp0);
+	config.lbtinput.runKT = config.physics.fixAlphas / 0.3;  // running coupling factor
 
 	// Random number initialization
 	srand(123); // or: srand((unsigned)time(NULL));
@@ -426,7 +395,7 @@ void runLBT(std::ifstream& fpList,
 
 		if (config.medium.vacORmed == 1) {
 			for (double ti = config.clock.time0 + config.clock.dt;
-					ti <= config.clock.timend + LBTConfig::epsilon;
+					ti <= config.clock.timend + base::epsilon;
 					ti += config.clock.dt) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "ti " << ti << std::endl;
 				lbtcl.LBT(partons_event, ti);

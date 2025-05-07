@@ -25,7 +25,7 @@ struct LBTInputParameters {
     double KTsig = 0.05 * 0.165; // initialized with hydro_Tc, should update
     double preKT = 1.0;//0.3/0.3
     double scaleAK = 2.0;
-    double KPfactor = 0.0, KTfactor = 0.0, Kfactor = 0.0, runKT = 0.0; // derived
+    double runKT = .0;//will be calculated.
 };
 
 struct JetInitializationParameters {
@@ -262,12 +262,6 @@ public:
     FlowAndPositionVectors flow;
     HQ22Distributions hq22;
     GluonEmissionTable emission;
-
-    static constexpr double pi = 3.1415926;
-    static constexpr double epsilon = 1e-6;
-    static constexpr double CA = 3.0;
-    static constexpr double CF = 4.0 / 3.0;
-    static constexpr double sctr = 0.1973;  // fm to GeV^-1
 
 
     void loadFromFile(const std::string& filename);
