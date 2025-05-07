@@ -2,6 +2,7 @@
 #define PARTICLE_H
 #include <iomanip>
 #include <iostream>
+#include "LBTcl_base.h"
 
 struct Particle {
         double P[6] = {0.0};        // Four-momentum (E, px, py, pz)
@@ -20,6 +21,17 @@ struct Particle {
         int mom1 = -1;  // Index of primary mother parton
         int mom2 = -1;  // Index of secondary (e.g. recoil) mother parton
         int index = -1;  // Unique ID for this particle in the vector
+	double timedilation = 0.0;//time dilation factor between lab frame and fluid rest frame.
+	double D2piT = 0.0;//dimention-less diffusion factor
+	void get_timedilation(){
+		double vMag =  sqrt(pow(vcfrozen[1],2) + pow(vcfrozen[2],2) + pow(vcfrozen[3],2));
+		this->timedilation =  (1.0-(P[1]*vcfrozen[1]+P[2]*vcfrozen[2]+P[3]*vcfrozen[3])/P[0])/sqrt(1.0-vMag*vMag);
+	};
+
+	void get_D2piT(const double qhat_over_T3){
+		if(KATT==21) this->D2piT=8.0*base::pi/(qhat_over_T3/base::CA*base::CF); 
+		else this->D2piT=8.0*base::pi/qhat_over_T3;
+	}
 
 	void Print(){
 		std::cout 

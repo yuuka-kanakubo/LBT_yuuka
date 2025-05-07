@@ -12,7 +12,7 @@ class LBTcl{
 	private:
 
 		LBTConfig& config;
-		double computeScatteringRate(const int flavor, const double PLen, const double T);
+		double computeScatteringRate(Particle &p, const double PLen, const double T);
 		double computeRadiationProbability(Particle &p, double T, double E);
 		void handleElasticCollision(Particle &p, std::vector<Particle> &particles);
 		void handleRadiation(Particle &p, std::vector<Particle> &particles, int &icl23, int &iclrad);
@@ -138,11 +138,12 @@ class LBTcl{
 
 
 
-		double nHQgluon(const int flavour,const double dtLRF,
-				const double time_gluon_, const double temp_med_,const double HQenergy_,double &max_Ng){
+		double nHQgluon(const Particle &p, const double dtLRF,
+				const double temp_med_,const double HQenergy_,double &max_Ng){
 			// gluon radiation probability for heavy quark       
 
-			double time_gluon = time_gluon_;
+			int flavour = p.KATT;
+			double time_gluon = p.Tint_lrf;
 			double temp_med = temp_med_;
 			double HQenergy = HQenergy_;
 			if(time_gluon>config.hqrad.t_max) {
@@ -174,6 +175,10 @@ class LBTcl{
 			//  HQenergy_num=(int)(HQenergy/delta_HQener+0.5); // use linear interpolation instead of finding nearest point for E and T dimensions
 			int temp_num=(int)((temp_med-config.hqrad.temp_min)/config.hqrad.delta_temp);
 			int HQenergy_num=(int)(HQenergy/config.hqrad.delta_HQener); // normal interpolation
+
+std::cout << time_num << std::endl;
+std::cout << temp_num << std::endl;
+std::cout << HQenergy_num << std::endl;
 
 			if(HQenergy_num >= config.hqrad.HQener_gn) HQenergy_num=config.hqrad.HQener_gn-1; // automatically become extrapolation
 			if(temp_num >= config.hqrad.temp_gn) temp_num=config.hqrad.temp_gn-1;
@@ -218,8 +223,14 @@ class LBTcl{
 			delta_Ng = rate_EGrid_low+(HQenergy-HQenergy_num*config.hqrad.delta_HQener)/config.hqrad.delta_HQener*(rate_EGrid_high-rate_EGrid_low);
 			max_Ng = max_EGrid_low+(HQenergy-HQenergy_num*config.hqrad.delta_HQener)/config.hqrad.delta_HQener*(max_EGrid_high-max_EGrid_low);
 
-			delta_Ng*=6.0/config.tables.D2piT*dtLRF;
-			max_Ng*=6.0/config.tables.D2piT;
+
+std::cout << " D2piT " << p.D2piT << std::endl;
+std::cout << " dtLRF " << dtLRF << std::endl;
+std::cout << " rate_T2E1 " << rate_T2E1 << std::endl;
+
+
+			delta_Ng*=6.0/p.D2piT*dtLRF;
+			max_Ng*=6.0/p.D2piT;
 
 			//  if(delta_Ng>1) {
 			//     std::cout << "Warning: Ng greater than 1   " << time_gluon << "  " << delta_Ng << std::endl;

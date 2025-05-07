@@ -10,7 +10,7 @@
 
 
 
-double LBTcl::computeScatteringRate(const int flavor, const double PLen_in, const double T_in) {
+double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const double T_in) {
 	// Lookup tables qhatG/qhatLQ/qhatHQ depending on flavor
 	// Interpolate based on PLen(E), T
 	// Return RTE (rate)
@@ -21,6 +21,7 @@ double LBTcl::computeScatteringRate(const int flavor, const double PLen_in, cons
 
 	// Assuming lam() is available (sets T1, T2, E1, E2 and index iT1, iT2, iE1, iE2)
 	double RTE;
+        int flavor = p.KATT;
 	lam(flavor, RTE, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
 	//Assuming lam returned T1, T2, E1, E2, iT1, iT2, iE1, iE2.
 	//They will be used in lam2 to get RTE1 and RTE2.
@@ -40,12 +41,15 @@ double LBTcl::computeScatteringRate(const int flavor, const double PLen_in, cons
 
 	qhat_over_T3 *= Kfactor;  // Apply correction
 
+	p.get_D2piT(qhat_over_T3);
+
 	// --- Step 5: Multiply by T^3 to get real qhat ---
 	return qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)
 }
 
 
 double LBTcl::computeRadiationProbability(Particle &p, const double T, const double E) {
+std::cout << "input of computeRadiation... " << T << " " << E << std::endl;
 	//Calculate the probability that a radiation event happens for the current particle over time dt_lrf.
 	//Use radng[i] from the original code, which tracks average number of gluons radiated.
 	//Need to use heavy quark or light parton radiation tables, e.g., nHQgluon().
@@ -60,18 +64,22 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
 
 	// Local interaction time
-	double dt_lrf = config.clock.dt * sqrt(1.0 - pow(p.vcfrozen[1], 2) - pow(p.vcfrozen[2], 2) - pow(p.vcfrozen[3], 2));
+	//double dt_lrf = config.clock.dt * sqrt(1.0 - pow(p.vcfrozen[1], 2) - pow(p.vcfrozen[2], 2) - pow(p.vcfrozen[3], 2));
+	double dt_lrf = config.clock.dt*p.timedilation;
 	p.Tint_lrf += dt_lrf;
 
 	// --- Update expected number of gluons radiated ---
-	if (p.KATT == 21) {
-		// Gluon: need 1/2 suppression
+std::cout << "input of nHQgluon... " << dt_lrf 
+	<< " " << p.Tint_lrf 
+	<< std::endl;
+if (p.KATT == 21) {
+	// Gluon: need 1/2 suppression
 		double max_N;
-		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT / 2.0;
+		p.radng += nHQgluon(p, dt_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT / 2.0;
 	} else {
 		// Quarks
 		double max_N;
-		p.radng += nHQgluon(p.KATT, dt_lrf, p.Tint_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT;
+		p.radng += nHQgluon(p, dt_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT;
 	}
 
 	// --- Phase space limitation ---
@@ -80,6 +88,7 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	double lim_int = lim_high - lim_low;
 
 	// --- Final radiation probability ---
+std::cout << "p.radng " << p.radng << std::endl;
 	if (lim_int > 0.0) {
 		return 1.0 - exp(-p.radng);
 	} else {
@@ -348,6 +357,10 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 			free = 1;
 		}
 
+		//Caclutate some variables used to caluculate interaction rate, radiation rate etc.
+		p.get_timedilation();
+
+
 	} else {
 		// --- Propagation in tau-eta coordinates ---
 
@@ -454,12 +467,13 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
                 // Query medium
                 double T = p.Tfrozen;
-                double qhat = computeScatteringRate(p.KATT, PLenloc, T);
+                double qhat = computeScatteringRate(p, PLenloc, T);
 		std::cout << "qhat " << qhat << std::endl;
 
                 // Compute probabilities
                 //double probCol = computeCollisionProbability(p, qhat, PLenloc, T, fraction);
                 double probRad = computeRadiationProbability(p, T, Eloc);
+		std::cout << "probRad " << probRad << std::endl;
 //                double probTot = probCol + probRad;
 //
 //                // Sample scattering

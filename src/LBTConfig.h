@@ -118,8 +118,6 @@ struct ScatteringTables {
     double RHQ11[60][20]{};
     double RHQ12[60][20]{};
     double qhatHQ[60][20]{};
-    double qhat_over_T3 = 0.0;
-    double D2piT = 0.0;
 };
 
 struct HeavyQuarkRadiation {
