@@ -9,7 +9,6 @@
 
 
 
-
 double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const double T_in) {
 	// Lookup tables qhatG/qhatLQ/qhatHQ depending on flavor
 	// Interpolate based on PLen(E), T
@@ -20,10 +19,8 @@ double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const dou
 	int iT1, iT2, iE1, iE2;
 
 	// Assuming lam() is available (sets T1, T2, E1, E2 and index iT1, iT2, iE1, iE2)
-	double RTE;
-        int flavor = p.KATT;
-	lam(flavor, RTE, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
-        p.tot_el_rate=RTE;
+        int flavor = p.pid;
+	lam(flavor, p.tot_el_rate, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
 	//Assuming lam returned T1, T2, E1, E2, iT1, iT2, iE1, iE2.
 	//They will be used in lam2 to get RTE1 and RTE2.
 
@@ -50,7 +47,6 @@ double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const dou
 
 
 double LBTcl::computeRadiationProbability(Particle &p, const double T, const double E) {
-std::cout << "input of computeRadiation... " << T << " " << E << std::endl;
 	//Calculate the probability that a radiation event happens for the current particle over time dt_lrf.
 	//Use radng[i] from the original code, which tracks average number of gluons radiated.
 	//Need to use heavy quark or light parton radiation tables, e.g., nHQgluon().
@@ -70,33 +66,26 @@ std::cout << "input of computeRadiation... " << T << " " << E << std::endl;
 	p.Tint_lrf += dt_lrf;
 
 	// --- Update expected number of gluons radiated ---
-std::cout << "input of nHQgluon... " << dt_lrf 
-	<< " " << p.Tint_lrf 
-	<< std::endl;
-if (p.KATT == 21) {
-	// Gluon: need 1/2 suppression
-		double max_N;
-		p.radng += nHQgluon(p, dt_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT / 2.0;
+	if (p.pid == 21) {
+		// Gluon: need 1/2 suppression
+		p.radng += nHQgluon(p, dt_lrf, T, E) * KTfactor * config.lbtinput.runKT / 2.0;
 	} else {
 		// Quarks
-		double max_N;
-		p.radng += nHQgluon(p, dt_lrf, T, E, max_N) * KTfactor * config.lbtinput.runKT;
+		p.radng += nHQgluon(p, dt_lrf, T, E) * KTfactor * config.lbtinput.runKT;
 	}
 
 	// --- Phase space limitation ---
 	double lim_low = sqrt(6.0 * M_PI * alpha_s) * T / E;
-	double lim_high = (abs(p.KATT) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
+	double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
 	double lim_int = lim_high - lim_low;
 
 	// --- Final radiation probability ---
-std::cout << "p.radng " << p.radng << std::endl;
 	if (lim_int > 0.0) {
 		return 1.0 - exp(-p.radng);
 	} else {
 		return 0.0;
 	}
 
-return 0.;
 }
 
 
@@ -126,31 +115,53 @@ double LBTcl::computeCollisionProbability(
 }
 
 
-void LBTcl::handleElasticCollision(Particle &p, std::vector<Particle> &particles) {
-//    int parentIndex = p.index;
-//
-//    // Step 1: Prepare momentum and flow for transformation
-//    double pc0[4] = {p.P[0], p.P[1], p.P[2], p.P[3]};
-//    double vc0[4] = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-//    trans(vc0, pc0);
-//
-//    // Step 2: Determine channel and output momenta
-//    int CT, KATT2, KATT3;
-//    double temp0 = p.Tfrozen;
-//    double PLen = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
-//
-//    flavor(CT, p.KATT, KATT2, KATT3, 0.0, PLen, temp0);
-//
-//    double pc2[4] = {0.0}; // scattered leading parton
-//    double pc3[4] = {0.0}; // thermal recoil
-//    double pc4[4] = {0.0}; // unused
-//    double qt = 0.0;
-//
-//    if (CT == 11 || CT == 12) {
-//        collHQ22(CT, temp0, qhat0, vc0, pc0, pc2, pc3, pc4, qt);
-//    } else {
-//        colljet22(CT, temp0, qhat0, vc0, pc0, pc2, pc3, pc4, qt);
-//    }
+void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &particles) {
+    int parentIndex = p.index;
+
+    // Step 1: Prepare momentum and flow for transformation
+    std::array <double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
+    std::array <double, 4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+
+    // Step 2: Determine channel and output momenta
+    // Decide flavor outcome
+    int channel, pid_med, pid_rec;
+    flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel, pid_med, pid_rec);
+std::cout << "pid med " << pid_med <<  std::endl;
+std::cout << "pid rec " << pid_rec <<  std::endl;
+std::cout << "channel " << channel <<  std::endl;
+exit(1);
+
+    // Deactivate incoming parton
+    p.isActive = false;
+
+
+    // Create new outgoing particles
+    Particle p_med;//incoming medium parton
+    Particle p_rec;
+
+    p_med.pid = pid_med;
+    p_rec.pid = pid_rec;
+
+    p_med.CAT = 2;  // recoiled
+    p_rec.CAT = 2;
+
+    p_med.mom1 = p.index;
+    p_rec.mom1 = p.index;
+
+    p_med.mom2 = p.index;
+    p_rec.mom2 = p.index;
+
+
+    // Optionally: log the event
+    std::cout << "Elastic collision (channel=" << channel << ") at t=" << p.V[0]
+              << ": pid=" << p.pid << " → pid_med=" << pid_med << ", pid_rec=" << pid_rec << std::endl;
+
+
+    if (channel == 11 || channel == 12) {
+	    collHQ22(channel, p, p_rec, p_med, qt);
+    } else {
+	    colljet22(CT, p, p_rec, p_med, qt);
+    }
 //
 //    transback(vc0, pc0);
 //    transback(vc0, pc2);
@@ -160,7 +171,7 @@ void LBTcl::handleElasticCollision(Particle &p, std::vector<Particle> &particles
 //    for (int j = 0; j < 4; ++j) {
 //        p.P[j] = pc0[j];
 //    }
-//    p.KATT = KATT2;
+//    p.pid = pid2;
 //    p.isActive = false;
 //
 //    // Step 4: Create new leading parton (scattered)
@@ -169,9 +180,9 @@ void LBTcl::handleElasticCollision(Particle &p, std::vector<Particle> &particles
 //        scattered.P[j] = pc2[j];
 //        scattered.V[j] = p.V[j];
 //    }
-//    scattered.KATT = KATT2;
+//    scattered.pid = pid2;
 //    scattered.CAT = 0;
-//    scattered.Tfrozen = temp0;
+//    scattered.Tfrozen = p.Tfrozen;
 //    scattered.vcfrozen[1] = p.vcfrozen[1];
 //    scattered.vcfrozen[2] = p.vcfrozen[2];
 //    scattered.vcfrozen[3] = p.vcfrozen[3];
@@ -191,9 +202,9 @@ void LBTcl::handleElasticCollision(Particle &p, std::vector<Particle> &particles
 //        recoil.P[j] = pc3[j];
 //        recoil.V[j] = p.V[j];
 //    }
-//    recoil.KATT = KATT3;
+//    recoil.pid = pid3;
 //    recoil.CAT = 2;  // recoil
-//    recoil.Tfrozen = temp0;
+//    recoil.Tfrozen = p.Tfrozen;
 //    recoil.vcfrozen[1] = p.vcfrozen[1];
 //    recoil.vcfrozen[2] = p.vcfrozen[2];
 //    recoil.vcfrozen[3] = p.vcfrozen[3];
@@ -206,68 +217,78 @@ void LBTcl::handleElasticCollision(Particle &p, std::vector<Particle> &particles
 //
 //    recoil.index = particles.size();  // assign current index
 //    particles.push_back(recoil);
+
+
+
+    out3.index = particles.size();
+    particles.push_back(out3);
+
+    out4.index = particles.size();
+    particles.push_back(out4);
+
 }
 
 
 
 
-void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles, int &icl23, int &iclrad) {
-//    int parentIndex = p.index;
-//
-//    // Step 1: Prepare momentum and flow
-//    double pc0[4] = {p.P[0], p.P[1], p.P[2], p.P[3]};
-//    double vc0[4] = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-//    trans(vc0, pc0);
-//    double Ejp = pc0[0];
-//    transback(vc0, pc0);
-//
-//    if (Ejp <= 2.0 * sqrt(qhat0)) return;
-//
-//    double pc2[4] = {0.0};  // Updated radiator
-//    double pc3[4] = {0.0};  // Ghost (unused)
-//    double pc4[4] = {0.0};  // Radiated gluon
-//    double qt = 0.0;
-//
-//    double T = p.Tfrozen;
-//    double Tdiff = p.Tint_lrf;
-//    double alpha_s = alphas0(Kalphas, T);
-//    double lim_low = sqrt(6.0 * M_PI * alpha_s) * T / Ejp;
-//    double lim_high = (abs(p.KATT) == 4) ? 1.0 : (1.0 - lim_low);
-//    double lim_int = lim_high - lim_low;
-//
-//    // Step 2: Call radiation kernel
-//    collHQ23(p.KATT, T, qhat0, vc0, pc0, pc2, pc3, pc4, qt,
-//		    icl23, Tdiff, Ejp, maxFncHQ, lim_low, lim_int, iclrad);
-//    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, qt, icl23, Tdiff, Ejp, iclrad);
-//
-//    // Step 3: Process radiation if successful
-//    if (icl23 != 1 && iclrad != 1) {
-//        // Deactivate parent and update momentum
-//        for (int j = 0; j < 4; ++j) {
-//            p.P[j] = pc0[j];
-//        }
-//        p.isActive = false;
-//
-//        // Add radiated gluon
-//        Particle gluon;
-//        for (int j = 0; j < 4; ++j) {
-//            gluon.P[j] = pc4[j];
-//            gluon.V[j] = p.V[j];
-//        }
-//        gluon.KATT = 21;
-//        gluon.CAT = 4;
-//        gluon.Tfrozen = T;
-//        gluon.vcfrozen[1] = p.vcfrozen[1];
-//        gluon.vcfrozen[2] = p.vcfrozen[2];
-//        gluon.vcfrozen[3] = p.vcfrozen[3];
-//        gluon.WT = p.WT;
-//        gluon.mass = 0.0;
-//        gluon.isPrimary = false;
-//        gluon.isActive = true;
-//        gluon.mom1 = parentIndex;
-//        gluon.mom2 = parentIndex;
-//        gluon.index = particles.size();
-//        particles.push_back(gluon);
+void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles) {
+    int parentIndex = p.index;
+
+    // Step 1: Prepare momentum and flow
+    std::array<double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
+    std::array<double, 4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+    trans(vc0, pc0);
+    double Eloc = pc0[0];
+    transback(vc0, pc0);
+
+    double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
+    double qhat0 = DebyeMass2(config.physics.Kalphas, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+
+    if (Eloc <= 2.0 * sqrt(qhat0)) return;
+
+    double lim_low = sqrt(6.0 * M_PI * alpha_s) * p.Tfrozen / Eloc;
+    double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);
+    double lim_int = lim_high - lim_low;
+
+    // Step 2: Call radiation kernel
+    double qt = 0.0;
+    double pc2[4] = {0.0};  // Updated radiator
+    double pc3[4] = {0.0};  // Ghost (unused)
+    double pc4[4] = {0.0};  // Radiated gluon
+
+//TODO
+//    collHQ23(p.pid, p.Tfrozen, qhat0, vc0, pc0, pc2, pc3, pc4, qt,
+//		    icl23, p.Tint_lrf, Eloc, p.max_Ng, lim_low, lim_int, iclrad);
+//    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, locqt, icl23, p.Tint_lrf, Ejp, iclrad);
+
+    // Step 3: Process radiation if successful
+ //   if (icl23 != 1 && iclrad != 1) {
+        // Deactivate parent and update momentum
+        for (int j = 0; j < 4; ++j) {
+            p.P[j] = pc0[j];
+        }
+        p.isActive = false;
+
+        // Add radiated gluon
+        Particle gluon;
+        for (int j = 0; j < 4; ++j) {
+            gluon.P[j] = pc4[j];
+            gluon.V[j] = p.V[j];
+        }
+        gluon.pid = 21;
+        gluon.CAT = 4;
+        gluon.Tfrozen = p.Tfrozen;
+        gluon.vcfrozen[1] = p.vcfrozen[1];
+        gluon.vcfrozen[2] = p.vcfrozen[2];
+        gluon.vcfrozen[3] = p.vcfrozen[3];
+        gluon.WT = p.WT;
+        gluon.mass = 0.0;
+        gluon.isPrimary = false;
+        gluon.isActive = true;
+        gluon.mom1 = parentIndex;
+        gluon.mom2 = parentIndex;
+        gluon.index = particles.size();
+        particles.push_back(gluon);
 //
 //        // Step 4: Handle multiple gluons (Poisson) for HQ
 //        int nrad = KPoisson(p.radng);
@@ -276,8 +297,8 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles, int &
 //            double pc4_more[4] = {0.0};
 //            double pb[4] = {0.0};
 //
-//            if (abs(p.KATT) == 4) {
-//                radiationHQ(p.KATT, qhat0, vc0, pc4, pc2_more, pc4_more, pb,
+//            if (abs(p.pid) == 4) {
+//                radiationHQ(p.pid, qhat0, vc0, pc4, pc2_more, pc4_more, pb,
 //                            iclrad, Tdiff, Ejp, maxFncHQ, T, lim_low, lim_int);
 //            } else {
 //                radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
@@ -290,7 +311,7 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles, int &
 //                    extraGluon.P[j] = pc4_more[j];
 //                    extraGluon.V[j] = p.V[j];
 //                }
-//                extraGluon.KATT = 21;
+//                extraGluon.pid = 21;
 //                extraGluon.CAT = 4;
 //                extraGluon.Tfrozen = T;
 //                extraGluon.vcfrozen[1] = p.vcfrozen[1];
@@ -308,7 +329,7 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles, int &
 //                break;  // Stop emitting if emission fails
 //            }
 //        }
-//    }
+  //  }
 }
 
 
@@ -435,6 +456,8 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     // Loop over all active part_event at this step
     for (int i = 0; i < (int)part_event.size(); ++i) {
         Particle &p = part_event[i];
+std::cout << "=============== " << i << std::endl;
+std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
 
         // Skip frozen or inactive part_event
         if (!p.isActive || p.Vfrozen[0] >= ti) continue;
@@ -442,14 +465,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
         int free = 0;
         double fraction = 0.0;
 
-	std::cout << __FILE__ << "(" << __LINE__ << ")" << "Before propagation " << std::endl;
-	p.Print();
 
         // Propagate parton
 	this->propagateParticle(p, ti, free, fraction);
 
-	std::cout << __FILE__ << "(" << __LINE__ << ")" << "After propagation " << std::endl;
-	p.Print();
 
 	if (p.CAT != 1 && free == 0) {
                 // Boost momentum into local fluid frame
@@ -459,15 +478,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
                 double Eloc = pc0[0];
                 double PLenloc = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
                 this->transback(vc0, pc0);
-
-		std::cout << __FILE__ << "(" << __LINE__ << ")" << "vc0" << std::endl;
-		for (const auto& val : vc0) {
-			std::cout << val << std::endl;
-		}
-		std::cout << __FILE__ << "(" << __LINE__ << ")" << "pc0" << std::endl;
-		for (const auto& val : pc0) {
-			std::cout << val << std::endl;
-		}
 
 
                 // Query medium
@@ -482,20 +492,24 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "probCol " << probCol << std::endl;
                 double probTot = probCol + probRad;
 
-	std::cout << __FILE__ << "(" << __LINE__ << ")" << "After prob calc. " << std::endl;
-	p.Print();
-//
-//                // Sample scattering
-//                if (ran0(&NUM1) < probTot) {
-//                    if (ran0(&NUM1) < probRad / probTot) {
-//                        handleRadiation(p, part_event, icl23, iclrad);
-//                    } else {
-//                        handleElasticCollision(p, part_event);
-//                    }
-//                }
-//
-//                // Reset radiation tracker
-//                p.radng = 0.0;
+
+                // Sample scattering
+		//TODO: should be like, ran0 < probCol, ran0 < probRad in parallel?
+		//      For now, I am just trying to reproduce the results.
+		if (ran0(&config.rng.NUM1) < probTot) {
+			std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleElasticCollision. " << std::endl;
+			std::cout << "ti " << ti << "  " << i << std::endl;
+			handleElasticCollision(p, PLenloc, part_event);
+			if (ran0(&config.rng.NUM1) < probRad / probTot) {
+				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
+				std::cout << "ti " << ti << "  " << i << std::endl;
+				exit(1);
+				handleRadiation(p, part_event);
+				//handleRadiation(p, part_event, icl23, iclrad);
+			}
+		}
+		// Reset radiation tracker
+                p.radng = 0.0;
             }//positive and free ==0(in medium)
     }//particle loop
     return;

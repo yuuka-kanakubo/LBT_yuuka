@@ -4,11 +4,39 @@
 #include <iostream>
 #include "LBTcl_base.h"
 
+
+//Particle createChildParticle(const Particle& parent, const int newpid) {
+//    Particle child;
+//
+//    child.V = parent.V;
+//    child.vcfrozen[1] = parent.vcfrozen[1];
+//    child.vcfrozen[2] = parent.vcfrozen[2];
+//    child.vcfrozen[3] = parent.vcfrozen[3];
+//
+//    child.Tfrozen = parent.Tfrozen;
+//    child.mass = parent.mass;  // update later if needed
+//    child.WT = parent.WT;
+//    child.isPrimary = false;
+//    child.isActive = true;
+//
+//    child.pid = newpid;
+//    child.CAT = 2;  // recoiled
+//    child.mom1 = parent.index;
+//    child.mom2 = parent.index;
+//
+//    return child;
+//}
+//
+
+
+
+
+
 struct Particle {
         double P[6] = {0.0};        // Four-momentum (E, px, py, pz)
         double V[4] = {0.0};        // Position (t or tau, x, y, z)
         int CAT = 0;                // Category: 0=active, 1=free streaming, 2=recoiled, 4=radiated, 9=negative
-        int KATT = 0;               // Flavor code
+        int pid = 0;               // Flavor code
         double Vfrozen[4] = {0.0};  // Frozen position (for interpolation)
         double Tfrozen = 0.0;       // Temperature when frozen
         double vcfrozen[4] = {0.0}; // Flow velocity when frozen
@@ -20,6 +48,7 @@ struct Particle {
         bool isActive = false;     // True if parton exist, and not a past history.
         double tot_el_rate = 0.0;     // Total elastic scattering rate (2->2)
         double Xtau_keep = 0.0;     // Xtau calculated by titau before propagation.
+        double max_Ng = 0.0;     // Maximum radiation rate. Used for efficient sampling.
         int mom1 = -1;  // Index of primary mother parton
         int mom2 = -1;  // Index of secondary (e.g. recoil) mother parton
         int index = -1;  // Unique ID for this particle in the vector
@@ -31,13 +60,13 @@ struct Particle {
 	};
 
 	void get_D2piT(const double qhat_over_T3){
-		if(KATT==21) this->D2piT=8.0*base::pi/(qhat_over_T3/base::CA*base::CF); 
+		if(pid==21) this->D2piT=8.0*base::pi/(qhat_over_T3/base::CA*base::CF); 
 		else this->D2piT=8.0*base::pi/qhat_over_T3;
 	}
 
 	void Print(){
 		std::cout 
-			<< std::setw(6)  << this->KATT
+			<< std::setw(6)  << this->pid
 			<< std::setw(6)  << this->CAT
 			<< std::endl
 			<< "P  "

@@ -14,44 +14,6 @@ void setJetX(int numInitXY){
 
 };
 
-float ran0(long *idum){
-	int j;
-	long k;
-	//##############
-	//static long seed_w=(unsigned) time(NULL);
-	static long seed_w=123;
-
-	static long idum2=seed_w;
-	//##############
-	static long iy=0;
-	static long iv[NTAB];
-	float temp;
-
-	if (*idum <= 0) { 
-		if (-(*idum) < 1) *idum=1; 
-		else *idum = -(*idum);
-		for (j=NTAB+7;j>=0;j--) { 
-			k=(*idum)/IQ1;
-			*idum=IA1*(*idum-k*IQ1)-k*IR1;
-			if (*idum < 0) *idum += IM1;
-			if (j < NTAB) iv[j] = *idum;
-		}
-		iy=iv[0];
-	}
-	k=(*idum)/IQ1; 
-	*idum=IA1*(*idum-k*IQ1)-k*IR1; 
-	if (*idum < 0) *idum += IM1; 
-	k=idum2/IQ2;
-	idum2=IA2*(idum2-k*IQ2)-k*IR2; 
-	if (idum2 < 0) idum2 += IM2;
-	j=iy/NDIV; 
-	iy=iv[j]-idum2; 
-	iv[j] = *idum; 
-	if (iy < 1) iy += IMM1;
-	if ((temp=AM*iy) > RNMX) return RNMX; 
-	else return temp;
-}
-
 
 
 int read_xyMC(LBTConfig &config) {
@@ -304,7 +266,7 @@ void get_set_ready(std::vector <Particle>& part_event, LBTConfig& config){
 		it->V[3]=0.0;
 
                 // adjust momentum to fit energy and mass
-		if(abs(it->KATT)==1||abs(it->KATT)==2||abs(it->KATT)==3||abs(it->KATT)==21){
+		if(abs(it->pid)==1||abs(it->pid)==2||abs(it->pid)==3||abs(it->pid)==21){
 			it->P[4]=0.0;
 			it->P[0]=sqrt(it->P[1]*it->P[1]+it->P[2]*it->P[2]+it->P[3]*it->P[3]+it->P[4]*it->P[4]);
 			it->P[5]=sqrt(it->P[1]*it->P[1]+it->P[2]*it->P[2]);//transverse momentum
@@ -351,7 +313,7 @@ void runLBT(std::ifstream& fpList,
 
 				std::istringstream iss(line);
 				Particle p;
-				if (!(iss >> dummyInt >> p.KATT >> p.P[1] >> p.P[2] >> p.P[3] >> p.P[0]
+				if (!(iss >> dummyInt >> p.pid >> p.P[1] >> p.P[2] >> p.P[3] >> p.P[0]
 							>> p.Vfrozen[1] >> p.Vfrozen[2] >> p.Vfrozen[3] >> p.Vfrozen[0])) {
 					std::cerr << "[Warning] Skipping malformed line: " << line << "\n";
 					continue;
@@ -399,7 +361,6 @@ void runLBT(std::ifstream& fpList,
 					ti += config.clock.dt) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "ti " << ti << std::endl;
 				lbtcl.LBT(partons_event, ti);
-				if (ti == config.clock.time0 + config.clock.dt) exit(1);
 			}
 		}
 
