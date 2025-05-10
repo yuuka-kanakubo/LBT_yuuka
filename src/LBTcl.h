@@ -2,6 +2,7 @@
 #define LBTCL_H
 #include <vector>
 #include <cmath>
+#include <algorithm>
 #include "ParticleInfo.h"
 #include "LBTConfig.h"
 #include "LBTcl_base.h"
@@ -391,58 +392,386 @@ class LBTcl{
 		}
 
 
+		bool sampleThermalParton(
+				const int channel,
+				const std::array<double, 4>& pc_jet,
+				const double T,
+				double& maxWeight,
+				double& e2_out
+				) {
 
-
-
-
-		void collHQ22(
-				int channel,
-				const Particle& p; // incoming particle
-				Particle& p_rec,  // output: recoiled thermal parton
-				Particle& p_med,  // output: initial thermal medium parton
-				double &qt         // output: transverse momentum transfer
-			     ) {
-
-			std::array<double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
-			std::array<double, 4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-
-			// Transform momentum into fluid rest frame
-			trans(vc0, pc0);
-
-			double mass = pc0[0] * pc0[0] - pc0[1] * pc0[1] - pc0[2] * pc0[2] - pc0[3] * pc0[3];
-			mass = (mass > 1e-12) ? std::sqrt(mass) : 0.0;
-
-			// Sampling and collision logic (unchanged, but clearer variable names used)
-			// [Sampling medium parton from distribution → stored in pc_med]
+			// Compute HQ mass
+			double HQmass2 = pc_jet[0]*pc_jet[0] - pc_jet[1]*pc_jet[1] - pc_jet[2]*pc_jet[2] - pc_jet[3]*pc_jet[3];
+			double HQmass = (HQmass2 > 1e-12) ? std::sqrt(HQmass2) : 0.0;
 
 			// Get momentum magnitude and temperature bin indices
-			double P = std::sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
-			double T = p.Tfrozen;
-			int index_P = std::clamp(static_cast<int>((P - min_p1) / bin_p1), 0, N_p1 - 1);
-			int index_T = std::clamp(static_cast<int>((T - min_T) / bin_T), 0, N_T - 1);
+			double P = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3]);
+			int idx_P = std::clamp(static_cast<int>((P - config.hq22.min_p1) / config.hq22.bin_p1), 0, config.hq22.N_p1 - 1);
+			int idx_T = std::clamp(static_cast<int>((T - config.hq22.min_T) / config.hq22.bin_T), 0, config.hq22.N_T - 1);
 
-			double fBmax = distFncBM[index_T][index_P];
-			double fFmax = distFncFM[index_T][index_P];
-//here
+			double fBmax = config.hq22.distFncBM[idx_T][idx_P];
+			double fFmax = config.hq22.distFncFM[idx_T][idx_P];
 
-			maxValue=10.0;  // need actual value later
+			for (int attempt = 0; attempt < 1e6; ++attempt) {
+				double xw = config.hq22.max_e2 * ran0(&config.rng.NUM1);
+				int idx_e2 = std::min(static_cast<int>((xw - config.hq22.min_e2) / config.hq22.bin_e2), config.hq22.N_e2 - 1);
+				double fval = 0.0;
 
-			ct1_loop=0;
+				if (channel == 11) {
+					fval = config.hq22.distFncF[idx_T][idx_P][idx_e2] / fFmax;
+					maxWeight =config.hq22. distMaxF[idx_T][idx_P][idx_e2];
+				} else if (channel == 12) {
+					fval = config.hq22.distFncB[idx_T][idx_P][idx_e2] / fBmax;
+					maxWeight = config.hq22.distMaxB[idx_T][idx_P][idx_e2];
+				}
 
-			// [Compute kinematics of final state → stored in pc0 and pc_rec]
+				if (ran0(&config.rng.NUM1) < fval) {
+					e2_out = xw * T;
+					return true;
+				}
+			}
 
-			// ... main HQ scattering sampling logic remains here (not duplicated for brevity) ...
+			e2_out = 0.0;
+			return false;
+		}
 
-			// Final: rotate and transform all momenta back to lab frame
-			transback(v0, pc_rec);  // recoiled medium parton
-			transback(v0, pc0);     // updated HQ momentum
-			transback(v0, pc_med);  // initial thermal medium parton
-			transback(v0, pc4);     // reference original HQ momentum
+		bool sampleCollisionAngles(
+				const int channel,
+				const std::array <double, 4> &pc_jet,
+				const double T,
+				const double e2,
+				const double qhat0ud,
+				const double maxWeight,
+				double& e4,
+				double& theta2,
+				double& theta4,
+				double& phi24
+				) {
 
-			// Transverse momentum transfer is computed relative to pc4
-			rotate(pc4[1], pc4[2], pc4[3], pc0, 1);
-			qt = std::sqrt(pc0[1] * pc0[1] + pc0[2] * pc0[2]);
-			rotate(pc4[1], pc4[2], pc4[3], pc0, -1);
+			double ff = 0.0;
+			double HQmass2 = pc_jet[0]*pc_jet[0] - pc_jet[1]*pc_jet[1] - pc_jet[2]*pc_jet[2] - pc_jet[3]*pc_jet[3];
+			double HQmass = (HQmass2 > 1e-12) ? std::sqrt(HQmass2) : 0.0;
+
+			// Get momentum magnitude and temperature bin indices
+			double P = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3]);
+			double E1 = std::sqrt(P * P + HQmass2);  // correct heavy quark energy
+
+			for (int i = 0; i < 1e6; ++i) {
+				theta2 = base::pi * ran0(&config.rng.NUM1);
+				theta4 = base::pi * ran0(&config.rng.NUM1);
+				phi24  = 2.0 * base::pi * ran0(&config.rng.NUM1);
+
+				double cos24 = std::sin(theta2) * std::sin(theta4) * std::cos(phi24) + std::cos(theta2) * std::cos(theta4);
+				double down = E1 - P * std::cos(theta4) + e2 - e2 * cos24;
+
+				e4 = (E1 * e2 - P * e2 * std::cos(theta2)) / down;
+
+				double sigFactor = std::sin(theta2) * std::sin(theta4) * e2 * e4 / down;
+
+				// Mandelstam variables in CM frame
+				double s = 2.0 * E1 * e2 + HQmass * HQmass - 2.0 * P * e2 * std::cos(theta2);
+				double t = -2.0 * e2 * e4 * (1.0 - cos24);
+				double u = 2.0 * HQmass * HQmass - s - t;
+
+				// kinematic cutoffs
+				if (s <= 2.0 * qhat0ud || t >= -qhat0ud || u >= -qhat0ud) continue;
+
+				double msq = 0.0;
+				if (channel == 11) {
+					ff = 1.0 / (std::exp(e2 / T) + 1.0) * (1.0 - 1.0 / (std::exp(e4 / T) + 1.0));
+					msq = Mqc2qc(s, t, HQmass);
+				} else if (channel == 12) {
+					ff = 1.0 / (std::exp(e2 / T) - 1.0) * (1.0 + 1.0 / (std::exp(e4 / T) - 1.0));
+					msq = Mgc2gc(s, t, HQmass);
+				}
+
+				sigFactor *= ff;
+				double rank = ran0(&config.rng.NUM1);
+				if (rank <= (msq / maxWeight) * sigFactor) {
+					return true;
+				}
+			}
+
+			return false;
+
+		}
+
+
+
+		double Mgg2gg_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					3.0 - tmin * (ss - tmin) / (ss * ss)
+					+ (ss - tmin) * ss / (tmin * tmin)
+					+ tmin * ss / ((ss - tmin) * (ss - tmin))
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				(3.0 - tt * uu / (ss * ss)
+				 + uu * ss / (tt * tt)
+				 + tt * ss / (uu * uu)) / mmax;
+			return msq;
+		}
+
+
+
+
+
+		double Mqg2qg_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					(4.0 / 9.0) * (tmin * tmin + (ss - tmin) * (ss - tmin)) / (tmin * (ss - tmin))
+					- (tmin * tmin + (ss - tmin) * (ss - tmin)) / (ss * ss)
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((4.0 / 9.0) * (tt * tt + uu * uu) / (tt * uu)
+				 - (tt * tt + uu * uu) / (ss * ss)) / (mmax + 4.0);
+			return msq;
+		}
+
+
+
+
+
+		double Mgq2gq_approx(double ss, double tt, double uu, double tmin, double tmax, double p0E, double p2E) {
+			double mmax_a = 4.0 / (ss * ss) * (
+					(ss * ss + (ss - tmin) * (ss - tmin)) / (tmin * tmin)
+					+ (4.0 / 9.0) * (ss * ss + (ss - tmin) * (ss - tmin)) / (ss * (ss - tmin))
+					);
+			double mmax_b = 4.0 / (ss * ss) * (
+					(ss * ss + (ss - tmax) * (ss - tmax)) / (tmax * tmax)
+					+ (4.0 / 9.0) * (ss * ss + (ss - tmax) * (ss - tmax)) / (ss * (ss - tmax))
+					);
+			double mmax = std::max(mmax_a, mmax_b);
+
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((ss * ss + uu * uu) / (tt * tt)
+				 + (4.0 / 9.0) * (ss * ss + uu * uu) / (ss * uu)) / mmax;
+			return msq;
+		}
+
+
+
+
+		double Mqq2qq_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) *
+				((4.0 / 9.0) * (ss * ss + (ss - tmin) * (ss - tmin)) / (tmin * tmin));
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((4.0 / 9.0) * (ss * ss + uu * uu) / (tt * tt)) / mmax;
+			return msq;
+		}
+
+
+
+
+		double Mqqbar2qqbar_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					(4.0 / 9.0) * (ss * ss + (ss - tmin) * (ss - tmin)) / (tmin * tmin)
+					+ (ss * ss + tmin * tmin) / ((ss - tmin) * (ss - tmin))
+					- (2.0 / 3.0) * ss * ss / (tmin * (ss - tmin))
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((4.0 / 9.0) * ((ss * ss + uu * uu) / (tt * tt)
+					+ (ss * ss + tt * tt) / (uu * uu))
+				 - (2.0 / 3.0) * ss * ss / (tt * uu)) / mmax;
+			return msq;
+		}
+
+
+
+
+		double Mqqbar2qqbar_diff_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					(4.0 / 9.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / std::pow(tmin, 2)
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((4.0 / 9.0) * (std::pow(ss, 2) + std::pow(uu, 2)) / std::pow(tt, 2)) / mmax;
+			return msq;
+		}
+
+
+		double Mqqbar2qqbar_same_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					(4.0 / 9.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / std::pow(tmin, 2)
+					+ (std::pow(ss, 2) + std::pow(tmin, 2)) / std::pow((ss - tmin), 2)
+					- (2.0 / 3.0) * std::pow(ss, 2) / (tmin * (ss - tmin))
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((4.0 / 9.0) * ((std::pow(ss, 2) + std::pow(uu, 2)) / std::pow(tt, 2)
+					+ (std::pow(ss, 2) + std::pow(tt, 2)) / std::pow(uu, 2))
+				 - (2.0 / 3.0) * std::pow(ss, 2) / (tt * uu)) / mmax;
+			return msq;
+		}
+
+
+
+		double Mqqbar2gg_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
+			double mmax = 4.0 / (ss * ss) * (
+					(32.0 / 27.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / (tmin * (ss - tmin))
+					- (8.0 / 3.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / std::pow(ss, 2)
+					);
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
+				((32.0 / 27.0) * (std::pow(tt, 2) + std::pow(uu, 2)) / (tt * uu)
+				 - (8.0 / 3.0) * (std::pow(tt, 2) + std::pow(uu, 2)) / std::pow(ss, 2)) / mmax;
+			return msq;
+		}
+
+
+
+
+		double computeMatrixElement(
+				const int channel,
+				const double ss, const double tt, const double uu,
+				const double tmin, const double tmax,
+				const double p0E, const double p2E
+				) {
+			switch (channel) {
+				case 1: return Mgg2gg_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 2: return Mqg2qg_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 3:
+				case 13:
+					return Mgq2gq_approx(ss, tt, uu, tmin, tmax, p0E, p2E);
+				case 4: return Mqq2qq_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 5: return Mqqbar2qqbar_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 6: return Mqqbar2qqbar_diff_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 7: return Mqqbar2qqbar_same_approx(ss, tt, uu, tmin, p0E, p2E);
+				case 8: return Mqqbar2gg_approx(ss, tt, uu, tmin, p0E, p2E);
+				default:
+					std::cerr << "Unsupported channel = " << channel << " in computeMatrixElement()\n";
+					exit(EXIT_FAILURE);
+			}
+		}
+
+
+
+		double getFinalStateStatFactor(const int channel, const double f1, const double f2) {
+			switch (channel) {
+				// Final state includes gluons → use Bose statistics
+				case 1: // g + g → g + g
+				case 2: // q + g → q + g
+				case 3: // g + q → g + q
+				case 4: // q + q → q + q
+				case 5: // q + q̄ → q + q̄
+				case 8: // q + q̄ → g + g
+					return f1;
+
+					// Final state includes only quarks/antiquarks → use Fermi statistics
+				case 6: // q + q̄ → q + q̄ (flavor-exchange)
+				case 7: // q + q̄ → q + q̄ (same-flavor)
+				case 13: // duplicate of 3, still gluonic → f1
+					return f2;
+
+				default:
+					std::cerr << "Warning: channel=" << channel << " not recognized for ff assignment.\n";
+					return 0.0;
+			}
+		}
+
+
+
+
+		void colljet22(
+				const int channel,
+				const Particle &p,
+				Particle &p_rec,
+				Particle &p_med,
+				Particle &p_fin,
+				double& qt                               // output: transverse momentum transfer
+			      ) {
+
+			//In original fnc.h,
+			//p2[4] (p_med) = Incoming thermal parton → sampled from the thermal distribution (e.g. Bose-Einstein)
+			//p3[4] (p_rec) = Recoil parton from the medium → final state of the thermal parton
+			//p0[4] (p and p_fin) = colljet22 takes p0 and save it to p4, then modify p0 (final state p_jet)
+			//*p4 in original fnc.h is just p0 (incoming jet).
+
+			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
+			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+			std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
+			std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
+			//std::array<double, 4> pc_init = {0.,0.,0.,0.};// output: original jet momentum before scattering
+
+
+			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
+			double qhat0ud = DebyeMass2(config.physics.Kalphas, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+
+			trans(v_fluid, pc_jet);
+
+			double max_msq = (channel == 21) ? 16.0 : 8.0;  // Mgg2gg vs Mqg2qg
+
+			for (int nloop = 0; nloop < 1e6; ++nloop) {
+
+				//Reasonable momentum sampling for pc_med (thermal parton);
+				//Sample until one gets reasonable t.
+				double t, s, f1, f2;
+				for (int mloop = 0; mloop < 1e6; ++mloop) {
+					double EoverT = 15.0 * ran0(&config.rng.NUM1);//Dimensionless energy x = E / T, max x=15
+					double phi24  = 2.0 * base::pi * ran0(&config.rng.NUM1);//Azimuthal angle φ ∈ [0, 2π]
+					double cos_ = 1.0 - 2.0 * ran0(&config.rng.NUM1);// cos(θ) ∈ [-1, 1]
+					double sin_ = sqrt(1.0 - cos_ * cos_);        // sin(θ) from cos(θ)
+
+					// Construct 4-momentum of the thermal parton
+					pc_med[0] = EoverT * p.Tfrozen;                     // Energy E = x·T
+					pc_med[1] = pc_med[0] * sin_ * cos(phi24);     // px = E·sin(θ)·cos(φ)
+					pc_med[2] = pc_med[0] * sin_ * sin(phi24);     // py = E·sin(θ)·sin(φ)
+					pc_med[3] = pc_med[0] * cos_;                  // pz = E·cos(θ)
+
+
+					//Normalised distribution function
+					double f1 = pow(EoverT, 3) / (exp(EoverT) - 1) / 1.4215;   // Bose-Einstein weight (gluon)
+					double f2 = pow(EoverT, 3) / (exp(EoverT) + 1) / 1.2845;   // Fermi-Dirac weight (quark)
+
+					//Mandelstam s = (p0 + p2)**2  = 2 p0 /dot p2 
+					//(massless is assumed! TODO check mass somewhere) 
+					s = 2.0 * (pc_jet[0]*pc_med[0] - pc_jet[1]*pc_med[1] - pc_jet[2]*pc_med[2] - pc_jet[3]*pc_med[3]);
+
+					//Randomly sample t from [0, s]
+					double r_ = ran0(&config.rng.NUM1);
+					t = r_ * s;
+
+					if ((t < qhat0ud) || (t > (s - qhat0ud))){
+						//Accepted!
+						break;
+					}
+
+
+				}
+
+				double tmin = qhat0ud;
+				double tmid = s / 2.0;
+				double tmax = s - qhat0ud;
+
+
+				//TODO ??? double u = -s - t  
+				double u = s - t;
+
+				// Matrix element
+				double msq = computeMatrixElement(channel, s, t, u, std::min(t, u), std::max(t, u), pc_jet[0], pc_med[0]);
+				double ff = getFinalStateStatFactor(channel, f1, f2);
+
+
+				double accept = msq * ff;
+				if (ran0(&config.rng.NUM1) <= accept) {
+					break;
+				}
+
+			}
+
+
+
+			//Passing...just to initialize pc_rec
+			pc_rec = pc_med;
+
+			//Calculate cm velocity in 
+			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_med);
+
+
+			//rotate(ref[1], ref[2], ref[3], pc_jet, 1);
+			qt = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2]);
+			//rotate(ref[1], ref[2], ref[3], pc_jet, -1);
+
+
+			// Transform all back to lab frame
+			transback(v_fluid, pc_jet);
+			transback(v_fluid, pc_rec);
+			transback(v_fluid, pc_med);
 		}
 
 
@@ -453,13 +782,106 @@ class LBTcl{
 
 
 
-	public:
+
+void collHQ22(
+		int channel,
+		const Particle& p, // incoming particle
+		Particle& p_rec,  // output: recoiled thermal parton
+		Particle& p_med,  // output: initial thermal medium parton
+		Particle& p_fin, 
+		double &qt         // output: transverse momentum transfer
+	     ) {
+
+	//Only here I am using p.P.
+	//Momentum should be put back at the end of this function.
+	std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
+	std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+	std::array<double, 4> pc_rec = {0., 0., 0., 0.};
+	std::array<double, 4> pc_med = {0., 0., 0., 0.};
+	//std::array<double, 4> pc_init = {0.,0.,0.,0.};// output: original jet momentum before scattering
+
+	// Transform heavy quark to fluid rest frame
+	trans(v_fluid, pc_jet);
+
+	// Save original momentum
+	//std::copy(pc_jet, pc_jet + 4, pc_init);
 
 
-		void LBT(std::vector<Particle> &particles, double ti);
+	double maxWeight, e2;
+	bool sampleOK = sampleThermalParton(channel, pc_jet, p.Tfrozen, maxWeight, e2);
+	if (!sampleOK) {
+		qt = 0.0;
+		pc_rec.fill(0.0);
+		pc_med.fill(0.0);
+		transback(v_fluid, pc_jet);
+		//transback(v0, pc_init);
+		return;
+	}
 
-		LBTcl(LBTConfig& config_in):config(config_in){};
-		~LBTcl(){};
+	// Sample angles
+	double qhat0ud, e4, theta2, theta4, phi24;
+	bool anglesOK = sampleCollisionAngles(
+			channel, pc_jet, p.Tfrozen, e2, qhat0ud, maxWeight,
+			e4, theta2, theta4, phi24
+			);
+	if (!anglesOK) {
+		qt = 0.0;
+		pc_rec.fill(0.0);
+		pc_med.fill(0.0);
+		transback(v_fluid, pc_jet);
+		//transback(v0, pc_init);
+		return;
+	}
+
+
+	// Final kinematics
+	pc_med[0] = e2;
+	pc_med[1] = e2 * std::sin(theta2);
+	pc_med[2] = 0.0;
+	pc_med[3] = e2 * std::cos(theta2);
+
+	pc_rec[0] = e4;
+	pc_rec[1] = e4 * std::sin(theta4) * std::cos(phi24);
+	pc_rec[2] = e4 * std::sin(theta4) * std::sin(phi24);
+	pc_rec[3] = e4 * std::cos(theta4);
+
+	// Back-rotate from jet axis
+	//rotate(pc_init[1], pc_init[2], pc_init[3], pc_rec, -1);
+	//rotate(pc_init[1], pc_init[2], pc_init[3], pc_med, -1);
+
+	// Update HQ momentum via conservation
+	//for (int j = 1; j <= 3; ++j)
+	//	pc_jet[j] = pc_init[j] + pc_med[j] - pc_rec[j];
+	//pc_jet[0] = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3] + HQmass*HQmass);
+
+	// Transverse momentum transfer
+	//rotate(pc_init[1], pc_init[2], pc_init[3], pc_jet, 1);
+	qt = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2]);
+	//rotate(pc_init[1], pc_init[2], pc_init[3], pc_jet, -1);
+
+	// Back-transform all to lab frame
+	transback(v_fluid, pc_rec);
+	transback(v_fluid, pc_med);
+	transback(v_fluid, pc_jet);
+	//transback(v0, pc_init);
+
+	for(int i=0; i<4; i++){
+		p_rec.V[i] = pc_rec[i];
+		p_med.V[i] = pc_med[i];
+	}
+}
+
+
+
+
+
+public:
+
+
+void LBT(std::vector<Particle> &particles, double ti);
+
+LBTcl(LBTConfig& config_in):config(config_in){};
+~LBTcl(){};
 
 };
 

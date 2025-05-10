@@ -126,10 +126,9 @@ void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vecto
     // Decide flavor outcome
     int channel, pid_med, pid_rec;
     flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel, pid_med, pid_rec);
-std::cout << "pid med " << pid_med <<  std::endl;
-std::cout << "pid rec " << pid_rec <<  std::endl;
-std::cout << "channel " << channel <<  std::endl;
-exit(1);
+    std::cout << "pid med " << pid_med <<  std::endl;
+    std::cout << "pid rec " << pid_rec <<  std::endl;
+    std::cout << "channel " << channel <<  std::endl;
 
     // Deactivate incoming parton
     p.isActive = false;
@@ -156,12 +155,20 @@ exit(1);
     std::cout << "Elastic collision (channel=" << channel << ") at t=" << p.V[0]
               << ": pid=" << p.pid << " → pid_med=" << pid_med << ", pid_rec=" << pid_rec << std::endl;
 
-
+    Particle p_fin;
+    double qt;
     if (channel == 11 || channel == 12) {
-	    collHQ22(channel, p, p_rec, p_med, qt);
+	    collHQ22(channel, p, p_rec, p_med, p_fin, qt);
     } else {
-	    colljet22(CT, p, p_rec, p_med, qt);
+	    colljet22(channel, p, p_rec, p_med, p_fin, qt);
     }
+
+    std::cout << "p_rec " << std::endl;
+    p_rec.Print();
+    std::cout << "p_med " <<  std::endl;
+    p_med.Print();
+
+    exit(1);
 //
 //    transback(vc0, pc0);
 //    transback(vc0, pc2);
@@ -220,11 +227,11 @@ exit(1);
 
 
 
-    out3.index = particles.size();
-    particles.push_back(out3);
+    p_med.index = particles.size();
+    particles.push_back(p_med);
 
-    out4.index = particles.size();
-    particles.push_back(out4);
+    p_rec.index = particles.size();
+    particles.push_back(p_rec);
 
 }
 
@@ -491,6 +498,29 @@ std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::en
 		std::cout << "probRad " << probRad << std::endl;
 		std::cout << "probCol " << probCol << std::endl;
                 double probTot = probCol + probRad;
+
+/*
+		if (ran0(&config.rng.NUM1) < probTot) {
+
+			if (ran0(&config.rng.NUM1) < probRad / probTot) {
+                                          do Radiation
+			  }else{
+					  do Collision
+			  } 
+	        }
+
+
+		if (ran0(&config.rng.NUM1) < probTot) {
+
+					  do Collision
+
+			if (ran0(&config.rng.NUM1) < probRad / probTot) {
+                                          do Radiation
+			  } 
+	        }
+
+
+*/
 
 
                 // Sample scattering
