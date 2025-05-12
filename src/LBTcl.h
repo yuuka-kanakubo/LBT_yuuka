@@ -539,6 +539,10 @@ class LBTcl{
 					(ss * ss + (ss - tmax) * (ss - tmax)) / (tmax * tmax)
 					+ (4.0 / 9.0) * (ss * ss + (ss - tmax) * (ss - tmax)) / (ss * (ss - tmax))
 					);
+//std::cout << "tmin " << tmin << std::endl;
+//std::cout << "tmax " << tmax << std::endl;
+//std::cout << "mmax_a " << mmax_a << std::endl;
+//std::cout << "mmax_b " << mmax_b << std::endl;
 			double mmax = std::max(mmax_a, mmax_b);
 
 			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
@@ -646,16 +650,16 @@ class LBTcl{
 				// Final state includes gluons → use Bose statistics
 				case 1: // g + g → g + g
 				case 2: // q + g → q + g
-				case 3: // g + q → g + q
-				case 4: // q + q → q + q
-				case 5: // q + q̄ → q + q̄
-				case 8: // q + q̄ → g + g
+				case 13: // duplicate of 3, still gluonic → f1
 					return f1;
 
 					// Final state includes only quarks/antiquarks → use Fermi statistics
+				case 4: // q + q → q + q
+				case 5: // q + q̄ → q + q̄
 				case 6: // q + q̄ → q + q̄ (flavor-exchange)
 				case 7: // q + q̄ → q + q̄ (same-flavor)
-				case 13: // duplicate of 3, still gluonic → f1
+				case 8: // q + q̄ → g + g
+				case 3: // g + q → g + q //TODO: why f2?
 					return f2;
 
 				default:
@@ -682,25 +686,30 @@ class LBTcl{
 			//p0[4] (p and p_fin) = colljet22 takes p0 and save it to p4, then modify p0 (final state p_jet)
 			//*p4 in original fnc.h is just p0 (incoming jet).
 
+			p_fin = p;
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 			std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
 			std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
-			//std::array<double, 4> pc_init = {0.,0.,0.,0.};// output: original jet momentum before scattering
+			std::array<double, 4> pc_fin = {0.,0.,0.,0.};
 
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
-			double qhat0ud = DebyeMass2(config.physics.Kalphas, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+			double qhat0ud = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+			std::cout << "Kalphas " << config.physics.Kalphas << std::endl;
+			std::cout << "alpha_s " << alpha_s << std::endl;
+			std::cout << "p.Tfrozen " << p.Tfrozen << std::endl;
 
 			trans(v_fluid, pc_jet);
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
-			double max_msq = (channel == 21) ? 16.0 : 8.0;  // Mgg2gg vs Mqg2qg
-
+			double t;
 			for (int nloop = 0; nloop < 1e6; ++nloop) {
 
 				//Reasonable momentum sampling for pc_med (thermal parton);
 				//Sample until one gets reasonable t.
-				double t, s, f1, f2;
+				double s, f1, f2;
 				for (int mloop = 0; mloop < 1e6; ++mloop) {
 					double EoverT = 15.0 * ran0(&config.rng.NUM1);//Dimensionless energy x = E / T, max x=15
 					double phi24  = 2.0 * base::pi * ran0(&config.rng.NUM1);//Azimuthal angle φ ∈ [0, 2π]
@@ -715,8 +724,8 @@ class LBTcl{
 
 
 					//Normalised distribution function
-					double f1 = pow(EoverT, 3) / (exp(EoverT) - 1) / 1.4215;   // Bose-Einstein weight (gluon)
-					double f2 = pow(EoverT, 3) / (exp(EoverT) + 1) / 1.2845;   // Fermi-Dirac weight (quark)
+					f1 = pow(EoverT, 3) / (exp(EoverT) - 1) / 1.4215;   // Bose-Einstein weight (gluon)
+					f2 = pow(EoverT, 3) / (exp(EoverT) + 1) / 1.2845;   // Fermi-Dirac weight (quark)
 
 					//Mandelstam s = (p0 + p2)**2  = 2 p0 /dot p2 
 					//(massless is assumed! TODO check mass somewhere) 
@@ -726,7 +735,7 @@ class LBTcl{
 					double r_ = ran0(&config.rng.NUM1);
 					t = r_ * s;
 
-					if ((t < qhat0ud) || (t > (s - qhat0ud))){
+					if ((t >= qhat0ud) && (t <= (s - qhat0ud))){
 						//Accepted!
 						break;
 					}
@@ -743,43 +752,113 @@ class LBTcl{
 				double u = s - t;
 
 				// Matrix element
-				double msq = computeMatrixElement(channel, s, t, u, std::min(t, u), std::max(t, u), pc_jet[0], pc_med[0]);
+				//std::cout << " s " << s << std::endl;
+				//std::cout << " t " << t << std::endl;
+				//std::cout << " u " << u << std::endl;
+				//std::cout << " pc_jet[0] " << pc_jet[0] << std::endl;
+				//std::cout << " pc_med[0] " << pc_med[0] << std::endl;
+				double msq = computeMatrixElement(channel, s, t, u, tmin, tmax, pc_jet[0], pc_med[0]);
 				double ff = getFinalStateStatFactor(channel, f1, f2);
-
+				//std::cout << " channel " << channel << std::endl;
+				//std::cout << " msq " << msq << std::endl;
+				//std::cout << " f1 " << f1 << std::endl;
+				//std::cout << " f2 " << f2 << std::endl;
+				//std::cout << " ff " << ff << std::endl;
 
 				double accept = msq * ff;
 				if (ran0(&config.rng.NUM1) <= accept) {
+				//	std::cout << "accepted! " << std::endl;
+				//	std::cout << "u " <<u << std::endl;
+				//	std::cout << "t " <<t << std::endl;
 					break;
 				}
 
 			}
 
-
-
-			//Passing...just to initialize pc_rec
+			//Passing...just to initialize pc_rec and pc_fin
 			pc_rec = pc_med;
 
 			//Calculate cm velocity in 
 			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_med);
+			trans(v_cm, pc_jet);
+			trans(v_cm, pc_med);
 
+			LongitudinalMomentumTransfer(t, pc_jet, pc_med, pc_fin);
 
-			//rotate(ref[1], ref[2], ref[3], pc_jet, 1);
-			qt = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2]);
-			//rotate(ref[1], ref[2], ref[3], pc_jet, -1);
+			transback(v_cm, pc_fin);
+			transback(v_cm, pc_med);
+
+			//     calculate qt in the rest frame of medium
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, 1);
+			double qT = sqrt(pc_fin[1] * pc_fin[1] + pc_fin[2] * pc_fin[2]);
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, -1);
 
 
 			// Transform all back to lab frame
-			transback(v_fluid, pc_jet);
 			transback(v_fluid, pc_rec);
 			transback(v_fluid, pc_med);
+			transback(v_fluid, pc_fin);
+			//std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+			//std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
+			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+
+			//Putting the info back
+			for(int i=0; i<=3; i++){
+				p_med.P[i] = pc_med[i];
+				p_rec.P[i] = pc_rec[i];
+				p_fin.P[i] = pc_fin[i];
+			}
 		}
 
 
 
+		void LongitudinalMomentumTransfer(const double t, const std::array<double, 4> pc_jet, std::array<double, 4>& pc_med, std::array<double, 4>& pc_fin){
+
+			//Copy initial info
+			pc_fin = pc_jet;
+
+			double pcm = pc_med[0];
+			double ran_p_=2.0*base::pi*ran0(&config.rng.NUM1);
+
+			double q_T=sqrt(pcm*pcm-(t/2.0/pcm-pcm)*(t/2.0/pcm-pcm));
+			double qx=q_T*cos(ran_p_);
+			double qy=q_T*sin(ran_p_);
+
+			double q_L=t/2.0/pcm;
 
 
+			// Compute velocity components of particle 2 in the lab frame
+			const double E2 = pc_med[0];
+			const double px2 = pc_med[1];
+			const double py2 = pc_med[2];
+			const double pz2 = pc_med[3];
 
+			const double transverseVelocity = std::sqrt(px2 * px2 + py2 * py2) / E2;
+			const double vx = px2 / E2;
+			const double vy = py2 / E2;
+			const double vz = pz2 / E2;
 
+			// Subtract longitudinal momentum transfer
+			pc_med[1] -= q_L * vx;
+			pc_med[2] -= q_L * vy;
+
+			// Add transverse momentum transfer, if transverse velocity is non-zero
+			if (transverseVelocity != 0.0) {
+				pc_med[1] += (vz * vx * qy + vy * qx) / transverseVelocity;
+				pc_med[2] += (vz * vy * qy - vx * qx) / transverseVelocity;
+			}
+
+			// Final z-component momentum update (labelled as s2 in original code)
+			pc_med[3] -= q_L * vz + transverseVelocity * qy;
+
+                      
+                        //Final state jet particle
+			pc_fin[1] = -pc_med[1]; 
+			pc_fin[2] = -pc_med[2]; 
+			pc_fin[3] = -pc_med[3]; 
+
+		}
 
 
 

@@ -167,6 +167,8 @@ void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vecto
     p_rec.Print();
     std::cout << "p_med " <<  std::endl;
     p_med.Print();
+    std::cout << "p_fin " <<  std::endl;
+    p_fin.Print();
 
     exit(1);
 //
@@ -249,7 +251,7 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles) {
     transback(vc0, pc0);
 
     double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
-    double qhat0 = DebyeMass2(config.physics.Kalphas, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+    double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 
     if (Eloc <= 2.0 * sqrt(qhat0)) return;
 
@@ -463,8 +465,8 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     // Loop over all active part_event at this step
     for (int i = 0; i < (int)part_event.size(); ++i) {
         Particle &p = part_event[i];
-std::cout << "=============== " << i << std::endl;
-std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
+	std::cout << "=============== " << i << std::endl;
+	std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
 
         // Skip frozen or inactive part_event
         if (!p.isActive || p.Vfrozen[0] >= ti) continue;
