@@ -57,12 +57,11 @@ struct ClockParameters {
 
 struct PhysicsSwitches {
     int Kprimary = 1;
-    int KINT0 = 1;
+    int Kinteraction = 1;
     int Kqhat0 = 2;
     int Kalphas = 1;
     double Ecut = 0.0;
     double fixAlphas = 0.3;
-    int KINT = 0;
     double alphas = 0.0;
     double qhat0 = 0.0;
     double qhat00 = 0.0;

@@ -14,6 +14,7 @@
 #define EPS 1.2e-7
 #define RNMX (1.0-EPS)
 
+inline int index_counter =0;
 
 namespace base{
 
@@ -23,7 +24,7 @@ namespace base{
     static constexpr double CF = 4.0 / 3.0;
     static constexpr double sctr = 0.1973;  // fm to GeV^-1
     static constexpr double GEVFM = 0.1970;
-
+ 
 }
 
 inline double get_magnitude(const std::array<double, 4>& p_) {

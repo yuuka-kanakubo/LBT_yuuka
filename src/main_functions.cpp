@@ -319,7 +319,7 @@ void runLBT(std::ifstream& fpList,
 					continue;
 				}
 
-				p.index = i;
+				p.assign_index();
 				p.isActive = true;
 				p.isPrimary = true;
 				partons_event.push_back(p);

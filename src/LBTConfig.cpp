@@ -40,7 +40,7 @@ void LBTConfig::loadFromFile(const std::string& filename) {
 				else if (key == "flag:vacORmed") medium.vacORmed = ival;
 				else if (key == "flag:bulkType") medium.bulkFlag = ival;
 				else if (key == "flag:Kprimary") physics.Kprimary = ival;
-				else if (key == "flag:KINT0") physics.KINT0 = ival;
+				else if (key == "flag:KINT0") physics.Kinteraction = ival;
 				else if (key == "flag:outFormat") output.outFormat = ival;
 				else if (key == "flag:heavyOut") output.heavyOut = ival;
 				else if (key == "flag:lightOut") output.lightOut = ival;
@@ -54,8 +54,7 @@ void LBTConfig::loadFromFile(const std::string& filename) {
 				else if (key == "para:dtau") clock.dtau = fval;
 				else if (key == "para:temperature") medium.temp0 = fval;
 				else if (key == "para:alpha_s") physics.fixAlphas = fval;
-				else if (key == "para:hydro_Tc") medium.hydro_Tc = fval;
-				else if (key == "para:pT_min") jet.ipTmin = fval;
+				else if (key == "para:hydro_Tc") medium.hydro_Tc = fval; else if (key == "para:pT_min") jet.ipTmin = fval;
 				else if (key == "para:pT_max") jet.ipTmax = fval;
 				else if (key == "para:eta_cut") jet.eta_cut = fval;
 				else if (key == "para:Ecut") physics.Ecut = fval;
@@ -85,7 +84,7 @@ void LBTConfig::loadFromFile(const std::string& filename) {
 	std::cout << "flag:vacORmed: " << medium.vacORmed << "\n";
 	std::cout << "flag:bulkType: " << medium.bulkFlag << "\n";
 	std::cout << "flag:Kprimary: " << physics.Kprimary << "\n";
-	std::cout << "flag:KINT0: " << physics.KINT0 << "\n";
+	std::cout << "flag:KINT0: " << physics.Kinteraction << "\n";
 	std::cout << "flag:outFormat: " << output.outFormat << "\n";
 	std::cout << "flag:heavyOut: " << output.heavyOut << "\n";
 	std::cout << "flag:lightOut: " << output.lightOut << "\n";

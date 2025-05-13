@@ -75,7 +75,7 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	}
 
 	// --- Phase space limitation ---
-	double lim_low = sqrt(6.0 * M_PI * alpha_s) * T / E;
+	double lim_low = sqrt(6.0 * base::pi * alpha_s) * T / E;
 	double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
 	double lim_int = lim_high - lim_low;
 
@@ -115,8 +115,8 @@ double LBTcl::computeCollisionProbability(
 }
 
 
-void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &particles) {
-    int parentIndex = p.index;
+double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &part_event) {
+    int parentIndex = p.index();
 
     // Step 1: Prepare momentum and flow for transformation
     std::array <double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
@@ -135,33 +135,42 @@ void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vecto
 
 
     // Create new outgoing particles
-    Particle p_med;//incoming medium parton
-    Particle p_rec;
+    Particle p_med = p;//incoming medium parton
+    Particle p_rec = p;
 
     p_med.pid = pid_med;
     p_rec.pid = pid_rec;
 
-    p_med.CAT = 2;  // recoiled
-    p_rec.CAT = 2;
+    Particle p_fin = p;
 
-    p_med.mom1 = p.index;
-    p_rec.mom1 = p.index;
-
-    p_med.mom2 = p.index;
-    p_rec.mom2 = p.index;
+    //index
+    p_med.assign_index();
+    p_rec.assign_index();
+    p_fin.assign_index();
 
 
     // Optionally: log the event
     std::cout << "Elastic collision (channel=" << channel << ") at t=" << p.V[0]
               << ": pid=" << p.pid << " → pid_med=" << pid_med << ", pid_rec=" << pid_rec << std::endl;
 
-    Particle p_fin;
     double qt;
     if (channel == 11 || channel == 12) {
 	    collHQ22(channel, p, p_rec, p_med, p_fin, qt);
+            std::cout << "ERROR: refactoring is not completed yet. " << std::endl;
+	    exit(EXIT_FAILURE);
     } else {
 	    colljet22(channel, p, p_rec, p_med, p_fin, qt);
     }
+
+    //(De)Activate particles after collision
+    p.isActive = false;
+
+    p_fin.isPrimary = true;//lost energy, still primary.
+    p_med.isPrimary = false;
+    p_rec.isPrimary = false;
+    p_fin.isActive = true;
+    p_med.isActive = true;
+    p_rec.isActive = true;
 
     std::cout << "p_rec " << std::endl;
     p_rec.Print();
@@ -170,100 +179,93 @@ void LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vecto
     std::cout << "p_fin " <<  std::endl;
     p_fin.Print();
 
-    exit(1);
-//
-//    transback(vc0, pc0);
-//    transback(vc0, pc2);
-//    transback(vc0, pc3);
-//
-//    // Step 3: Mark parent as inactive and update its momentum
-//    for (int j = 0; j < 4; ++j) {
-//        p.P[j] = pc0[j];
-//    }
-//    p.pid = pid2;
-//    p.isActive = false;
-//
-//    // Step 4: Create new leading parton (scattered)
-//    Particle scattered;
-//    for (int j = 0; j < 4; ++j) {
-//        scattered.P[j] = pc2[j];
-//        scattered.V[j] = p.V[j];
-//    }
-//    scattered.pid = pid2;
-//    scattered.CAT = 0;
-//    scattered.Tfrozen = p.Tfrozen;
-//    scattered.vcfrozen[1] = p.vcfrozen[1];
-//    scattered.vcfrozen[2] = p.vcfrozen[2];
-//    scattered.vcfrozen[3] = p.vcfrozen[3];
-//    scattered.WT = p.WT;
-//    scattered.mass = 0.0;
-//    scattered.isPrimary = false;
-//    scattered.isActive = true;
-//    scattered.mom1 = parentIndex;
-//    scattered.mom2 = parentIndex;  // use same if ghost not tracked
-//
-//    scattered.index = particles.size();  // assign current index
-//    particles.push_back(scattered);
-//
-//    // Step 5: Create thermal recoil parton
-//    Particle recoil;
-//    for (int j = 0; j < 4; ++j) {
-//        recoil.P[j] = pc3[j];
-//        recoil.V[j] = p.V[j];
-//    }
-//    recoil.pid = pid3;
-//    recoil.CAT = 2;  // recoil
-//    recoil.Tfrozen = p.Tfrozen;
-//    recoil.vcfrozen[1] = p.vcfrozen[1];
-//    recoil.vcfrozen[2] = p.vcfrozen[2];
-//    recoil.vcfrozen[3] = p.vcfrozen[3];
-//    recoil.WT = p.WT;
-//    recoil.mass = 0.0;
-//    recoil.isPrimary = false;
-//    recoil.isActive = true;
-//    recoil.mom1 = parentIndex;
-//    recoil.mom2 = parentIndex;
-//
-//    recoil.index = particles.size();  // assign current index
-//    particles.push_back(recoil);
+    p_med.CAT = 3;//negative
+    p_rec.CAT = 2;//recoiled 
+
+    //p_med.parent1 = -1;//I am just commenting out since by default it will be initialised with -1
+    //p_med.parent2 = -1;//N/A since it's medium parton
+
+    p_rec.parent1 = p.index();
+    p_rec.parent2 = p_med.index();
 
 
+    p_med.kid1 = p_rec.index();
+    p_med.kid2 = p_fin.index();
+    p.kid1 = p_rec.index();
+    p.kid2 = p_fin.index();
 
-    p_med.index = particles.size();
-    particles.push_back(p_med);
+   //Vfrozen, Tfrozen = Vertices and Temperature of interaction point?
+    p_med.copy_thisV_to_Vfrozen(p.V);
+    p_med.Tfrozen = p.Tfrozen;
+    p_med.copy_thisV_to_vcfrozen(p.vcfrozen);
 
-    p_rec.index = particles.size();
-    particles.push_back(p_rec);
+    p_rec.copy_thisV_to_Vfrozen(p.V);
+    p_rec.Tfrozen = p.Tfrozen;
+    p_rec.copy_thisV_to_vcfrozen(p.vcfrozen);
 
+    part_event.push_back(p_fin);
+    part_event.push_back(p_med);
+    part_event.push_back(p_rec);
+
+    return qt;
 }
 
 
 
 
-void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles) {
-    int parentIndex = p.index;
+void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &part_event) {
 
-    // Step 1: Prepare momentum and flow
-    std::array<double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
-    std::array<double, 4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-    trans(vc0, pc0);
-    double Eloc = pc0[0];
-    transback(vc0, pc0);
+	//In original LBT...
+	//pc01 is pc4 (initial jet momentum in 2->2)
+	//pc2: "recoiled" particle. will be overwritten by pc3 anyways.
+	//pc3: scattering "medium" particle. ==> apparently reused from the handleCollision
+	//pc4: radiated gluon momentum will be calculated in this function.
+	std::array<double, 4> pc_rad = {0., 0., 0., 0.};
+	std::array<double, 4> pc_rec = {0., 0., 0., 0.};
+	std::array<double, 4> pc_fin = {0., 0., 0., 0.};
+
+	//Looking for the missing partner!
+	//Then, what I need to do here is to find the "scattering medium particle" in part_event.
+	//I am tracing pc4 (the incoming jet). So, I know daughters of pc4.
+	//Once I know the daughters of pc4, I can find their moms indices. 
+	//The one has medium tag (CAT = "medium") is going to be pc3. 
+
+	//Here I hope kid1 is allocated in part_event[i_kid1]
+	//Is this scattered medium parton?
+	std::array<double, 4> pc_med = {0., 0., 0., 0.};
+	if(part_event[p.kid1].CAT == 3){
+		for(int i = 1; i<=3 ; i++) pc_med[i] =  part_event[p.kid1].P[i];
+	}else if(part_event[p.kid2].CAT == 3){
+		for(int i = 1; i<=3 ; i++) pc_med[i] =  part_event[p.kid1].P[i];
+	}else{
+		std::cout << "ERROR! Couldn't find the missing medium partner... " << std::endl; 
+		std::cout << "p.kid1 " << p.kid1 << std::endl; 
+		std::cout << "p.kid2 " << p.kid2 << std::endl; 
+		std::cout << "part_event[p.kid1].CAT " << part_event[p.kid1].CAT << std::endl; 
+		std::cout << "part_event[p.kid2].CAT " << part_event[p.kid2].CAT << std::endl; 
+		exit(EXIT_FAILURE);
+	}
+
+
+// Step 1: Prepare momentum and flow
+    std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
+    std::array<double, 4> v_flow = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
+			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+exit(1);
+    trans(v_flow, pc_jet);
+    double Eloc = pc_jet[0];
+    transback(v_flow, pc_jet);
 
     double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
     double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 
     if (Eloc <= 2.0 * sqrt(qhat0)) return;
 
-    double lim_low = sqrt(6.0 * M_PI * alpha_s) * p.Tfrozen / Eloc;
-    double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);
-    double lim_int = lim_high - lim_low;
-
     // Step 2: Call radiation kernel
-    double qt = 0.0;
-    double pc2[4] = {0.0};  // Updated radiator
-    double pc3[4] = {0.0};  // Ghost (unused)
-    double pc4[4] = {0.0};  // Radiated gluon
+
 
 //TODO
 //    collHQ23(p.pid, p.Tfrozen, qhat0, vc0, pc0, pc2, pc3, pc4, qt,
@@ -274,14 +276,14 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles) {
  //   if (icl23 != 1 && iclrad != 1) {
         // Deactivate parent and update momentum
         for (int j = 0; j < 4; ++j) {
-            p.P[j] = pc0[j];
+            p.P[j] = pc_jet[j];
         }
         p.isActive = false;
 
         // Add radiated gluon
         Particle gluon;
         for (int j = 0; j < 4; ++j) {
-            gluon.P[j] = pc4[j];
+            gluon.P[j] = pc_jet[j];
             gluon.V[j] = p.V[j];
         }
         gluon.pid = 21;
@@ -294,10 +296,10 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &particles) {
         gluon.mass = 0.0;
         gluon.isPrimary = false;
         gluon.isActive = true;
-        gluon.mom1 = parentIndex;
-        gluon.mom2 = parentIndex;
-        gluon.index = particles.size();
-        particles.push_back(gluon);
+        gluon.parent1 = p.index();
+        //gluon.parent2 = p.index();
+        gluon.assign_index();
+        part_event.push_back(gluon);
 //
 //        // Step 4: Handle multiple gluons (Poisson) for HQ
 //        int nrad = KPoisson(p.radng);
@@ -457,11 +459,6 @@ return;
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     int np_snapshot = part_event.size();  // snapshot of part_event at start of this step "np0"
 
-    // Assign indices to existing part_event for ancestry tracking
-    for (int i = 0; i < (int)part_event.size(); ++i) {
-        part_event[i].index = i;
-    }
-
     // Loop over all active part_event at this step
     for (int i = 0; i < (int)part_event.size(); ++i) {
         Particle &p = part_event[i];
@@ -530,14 +527,22 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		//      For now, I am just trying to reproduce the results.
 		if (ran0(&config.rng.NUM1) < probTot) {
 			std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleElasticCollision. " << std::endl;
-			std::cout << "ti " << ti << "  " << i << std::endl;
-			handleElasticCollision(p, PLenloc, part_event);
+			double qt = handleElasticCollision(p, PLenloc, part_event);
+
+		//CHECKING
+		std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
+		for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+			it->Print();
+		}
+exit(1);
+
+
+                        if(config.physics.Kinteraction==0 || (qt<base::epsilon)) continue;
 			if (ran0(&config.rng.NUM1) < probRad / probTot) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
 				std::cout << "ti " << ti << "  " << i << std::endl;
-				exit(1);
 				handleRadiation(p, part_event);
-				//handleRadiation(p, part_event, icl23, iclrad);
+				exit(1);
 			}
 		}
 		// Reset radiation tracker

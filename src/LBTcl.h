@@ -15,7 +15,7 @@ class LBTcl{
 		LBTConfig& config;
 		double computeScatteringRate(Particle &p, const double PLen, const double T);
 		double computeRadiationProbability(Particle &p, double T, double E);
-		void handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles);
+		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles);
 		void handleRadiation(Particle &p, std::vector<Particle> &particles);
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
@@ -681,12 +681,11 @@ class LBTcl{
 			      ) {
 
 			//In original fnc.h,
-			//p2[4] (p_med) = Incoming thermal parton → sampled from the thermal distribution (e.g. Bose-Einstein)
-			//p3[4] (p_rec) = Recoil parton from the medium → final state of the thermal parton
+			//p2[4] (p_rec) = Incoming thermal parton → sampled from the thermal distribution (e.g. Bose-Einstein)
+			//p3[4] (p_med) = Recoil parton from the medium → final state of the thermal parton
 			//p0[4] (p and p_fin) = colljet22 takes p0 and save it to p4, then modify p0 (final state p_jet)
 			//*p4 in original fnc.h is just p0 (incoming jet).
 
-			p_fin = p;
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 			std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
@@ -779,14 +778,14 @@ class LBTcl{
 			pc_rec = pc_med;
 
 			//Calculate cm velocity in 
-			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_med);
+			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_rec);
 			trans(v_cm, pc_jet);
-			trans(v_cm, pc_med);
+			trans(v_cm, pc_rec);
 
-			LongitudinalMomentumTransfer(t, pc_jet, pc_med, pc_fin);
+			LongitudinalMomentumTransfer(t, pc_jet, pc_rec, pc_fin);
 
 			transback(v_cm, pc_fin);
-			transback(v_cm, pc_med);
+			transback(v_cm, pc_rec);
 
 			//     calculate qt in the rest frame of medium
 			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, 1);
@@ -799,8 +798,8 @@ class LBTcl{
 			transback(v_fluid, pc_med);
 			transback(v_fluid, pc_fin);
 			//std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			//std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			std::cout << "pc_med(p3) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
+			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
 			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			//Putting the info back
@@ -813,12 +812,12 @@ class LBTcl{
 
 
 
-		void LongitudinalMomentumTransfer(const double t, const std::array<double, 4> pc_jet, std::array<double, 4>& pc_med, std::array<double, 4>& pc_fin){
+		void LongitudinalMomentumTransfer(const double t, const std::array<double, 4> pc_jet, std::array<double, 4>& pc_rec, std::array<double, 4>& pc_fin){
 
 			//Copy initial info
 			pc_fin = pc_jet;
 
-			double pcm = pc_med[0];
+			double pcm = pc_rec[0];
 			double ran_p_=2.0*base::pi*ran0(&config.rng.NUM1);
 
 			double q_T=sqrt(pcm*pcm-(t/2.0/pcm-pcm)*(t/2.0/pcm-pcm));
@@ -829,10 +828,10 @@ class LBTcl{
 
 
 			// Compute velocity components of particle 2 in the lab frame
-			const double E2 = pc_med[0];
-			const double px2 = pc_med[1];
-			const double py2 = pc_med[2];
-			const double pz2 = pc_med[3];
+			const double E2 = pc_rec[0];
+			const double px2 = pc_rec[1];
+			const double py2 = pc_rec[2];
+			const double pz2 = pc_rec[3];
 
 			const double transverseVelocity = std::sqrt(px2 * px2 + py2 * py2) / E2;
 			const double vx = px2 / E2;
@@ -840,23 +839,23 @@ class LBTcl{
 			const double vz = pz2 / E2;
 
 			// Subtract longitudinal momentum transfer
-			pc_med[1] -= q_L * vx;
-			pc_med[2] -= q_L * vy;
+			pc_rec[1] -= q_L * vx;
+			pc_rec[2] -= q_L * vy;
 
 			// Add transverse momentum transfer, if transverse velocity is non-zero
 			if (transverseVelocity != 0.0) {
-				pc_med[1] += (vz * vx * qy + vy * qx) / transverseVelocity;
-				pc_med[2] += (vz * vy * qy - vx * qx) / transverseVelocity;
+				pc_rec[1] += (vz * vx * qy + vy * qx) / transverseVelocity;
+				pc_rec[2] += (vz * vy * qy - vx * qx) / transverseVelocity;
 			}
 
 			// Final z-component momentum update (labelled as s2 in original code)
-			pc_med[3] -= q_L * vz + transverseVelocity * qy;
+			pc_rec[3] -= q_L * vz + transverseVelocity * qy;
 
                       
                         //Final state jet particle
-			pc_fin[1] = -pc_med[1]; 
-			pc_fin[2] = -pc_med[2]; 
-			pc_fin[3] = -pc_med[3]; 
+			pc_fin[1] = -pc_rec[1]; 
+			pc_fin[2] = -pc_rec[2]; 
+			pc_fin[3] = -pc_rec[3]; 
 
 		}
 
