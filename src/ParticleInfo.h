@@ -75,6 +75,7 @@ struct Particle {
 	}
 
 	void Print(){
+		std::cout << "----" << std::endl;
 		std::cout 
 			<< "[ index  "
 			<< std::setw(6)  << this->index_
@@ -97,7 +98,7 @@ struct Particle {
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[3]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[4]
 			<< std::endl
-			<< "V  "
+			<< " V  "
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[0]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[1]
 			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[2]

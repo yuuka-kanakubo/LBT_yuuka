@@ -113,15 +113,29 @@ void readTables(LBTConfig &config) {
     std::ifstream f12("b-tables/dNg_over_dt_bD6.dat");
     std::ifstream f13("tables/dNg_over_dt_qD6.dat");
     std::ifstream f14("tables/dNg_over_dt_gD6.dat");
-
     if (!f12.is_open() || !f13.is_open() || !f14.is_open()) {
         std::cerr << "Error opening dNg_over_dt tables!\n";
     } else {
         for (int k = 1; k <= config.hqrad.t_gn; ++k) {
-            std::string dummy;
-            std::getline(f12, dummy);
-            std::getline(f13, dummy);
-            std::getline(f14, dummy);
+		int counter=0;
+		std::string dummy;
+		std::streampos pos = f14.tellg();
+		std::string headerLine;
+		std::getline(f12 >> std::ws, dummy);
+		std::getline(f13 >> std::ws, dummy);
+
+		std::getline(f14 >> std::ws, headerLine);
+		if (headerLine.empty() || headerLine.find("timestep:") == std::string::npos) {
+			std::cerr << "[DEBUG] Unexpected line at k=" << k << ": '" << headerLine << "'\n";
+			std::cerr << "[DEBUG] Seek pos before line: " << pos << "\n";
+			// Optional: dump the next few lines manually
+			for (int i = 0; i < 3; ++i) {
+				std::string l;
+				std::getline(f14, l);
+				std::cerr << "[LOOKAHEAD] " << l << "\n";
+			}
+			std::exit(EXIT_FAILURE);
+		}
 
             for (int i = 1; i <= config.hqrad.temp_gn; ++i) {
                 config.hqrad.dNg_over_dt_c[k + 1][i][0] = 0.0;
@@ -134,10 +148,20 @@ void readTables(LBTConfig &config) {
                 for (int j = 1; j <= config.hqrad.HQener_gn; ++j) {
                     f12 >> config.hqrad.dNg_over_dt_c[k + 1][i][j] >> config.hqrad.max_dNgfnc_c[k + 1][i][j];
                     f13 >> config.hqrad.dNg_over_dt_q[k + 1][i][j] >> config.hqrad.max_dNgfnc_q[k + 1][i][j];
-                    f14 >> config.hqrad.dNg_over_dt_g[k + 1][i][j] >> config.hqrad.max_dNgfnc_g[k + 1][i][j];
-                }
+		    f14 >> config.hqrad.dNg_over_dt_g[k + 1][i][j] >> config.hqrad.max_dNgfnc_g[k + 1][i][j];
+		    if( k == 1 && i == config.hqrad.temp_gn && j == config.hqrad.HQener_gn)
+			    std::cout << " config.hqrad.dNg_over_dt_g[k + 1][i][j] " << config.hqrad.dNg_over_dt_g[k + 1][i][j]  << std::endl;
+		    if( k == config.hqrad.t_gn - 1 && i == config.hqrad.temp_gn && j == config.hqrad.HQener_gn)
+			    std::cout << " config.hqrad.dNg_over_dt_g[k + 1][i][j] " << config.hqrad.dNg_over_dt_g[k + 1][i][j]  << std::endl;
+		}
             }
-        }
+	}
+	std::cout << "t_gn " << config.hqrad.t_gn << std::endl;
+	std::cout << "temp_gn " << config.hqrad.temp_gn << std::endl;
+	std::cout << "HQener_gn " << config.hqrad.HQener_gn << std::endl;
+	std::cout << config.hqrad.dNg_over_dt_c[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_c[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
+	std::cout << config.hqrad.dNg_over_dt_q[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_q[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
+	std::cout << config.hqrad.dNg_over_dt_g[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_g[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
         f12.close();
         f13.close();
         f14.close();

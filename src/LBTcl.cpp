@@ -206,7 +206,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     part_event.push_back(p_fin);
     part_event.push_back(p_med);
     part_event.push_back(p_rec);
-
     return qt;
 }
 
@@ -534,15 +533,14 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		for (auto it = part_event.begin(); it != part_event.end(); ++it) {
 			it->Print();
 		}
-exit(1);
-
+		//CHECKING
 
                         if(config.physics.Kinteraction==0 || (qt<base::epsilon)) continue;
 			if (ran0(&config.rng.NUM1) < probRad / probTot) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
 				std::cout << "ti " << ti << "  " << i << std::endl;
-				handleRadiation(p, part_event);
 				exit(1);
+				handleRadiation(p, part_event);
 			}
 		}
 		// Reset radiation tracker

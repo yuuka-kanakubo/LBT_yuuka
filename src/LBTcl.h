@@ -142,7 +142,7 @@ class LBTcl{
 		double nHQgluon(Particle &p, const double dtLRF,
 				const double temp_med_,const double HQenergy_){
 			// gluon radiation probability for heavy quark       
-
+std::cout << "nHQgluon! " << std::endl;
 			int flavour = p.pid;
 			double time_gluon = p.Tint_lrf;
 			double temp_med = temp_med_;
@@ -177,12 +177,12 @@ class LBTcl{
 			int temp_num=(int)((temp_med-config.hqrad.temp_min)/config.hqrad.delta_temp);
 			int HQenergy_num=(int)(HQenergy/config.hqrad.delta_HQener); // normal interpolation
 
+			if(HQenergy_num >= config.hqrad.HQener_gn) HQenergy_num=config.hqrad.HQener_gn-1; // automatically become extrapolation
+			if(temp_num >= config.hqrad.temp_gn) temp_num=config.hqrad.temp_gn-1;
+
 			std::cout << time_num << std::endl;
 			std::cout << temp_num << std::endl;
 			std::cout << HQenergy_num << std::endl;
-
-			if(HQenergy_num >= config.hqrad.HQener_gn) HQenergy_num=config.hqrad.HQener_gn-1; // automatically become extrapolation
-			if(temp_num >= config.hqrad.temp_gn) temp_num=config.hqrad.temp_gn-1;
 
 
 			double rate_T1E1,rate_T1E2,rate_T2E1,rate_T2E2,max_T1E1,max_T1E2,max_T2E1,max_T2E2;
@@ -781,8 +781,10 @@ class LBTcl{
 			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_rec);
 			trans(v_cm, pc_jet);
 			trans(v_cm, pc_rec);
+			std::cout << "Before pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			LongitudinalMomentumTransfer(t, pc_jet, pc_rec, pc_fin);
+			std::cout << "After pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			transback(v_cm, pc_fin);
 			transback(v_cm, pc_rec);
@@ -797,10 +799,11 @@ class LBTcl{
 			transback(v_fluid, pc_rec);
 			transback(v_fluid, pc_med);
 			transback(v_fluid, pc_fin);
-			//std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+			transback(v_fluid, pc_jet);
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 			std::cout << "pc_med(p3) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
 			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			//Putting the info back
 			for(int i=0; i<=3; i++){
@@ -826,7 +829,8 @@ class LBTcl{
 
 			double q_L=t/2.0/pcm;
 
-
+			std::cout << "q_L " << q_L << std::endl; 
+			std::cout << "q_T " << q_T << std::endl; 
 			// Compute velocity components of particle 2 in the lab frame
 			const double E2 = pc_rec[0];
 			const double px2 = pc_rec[1];
