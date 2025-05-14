@@ -372,7 +372,7 @@ void runLBT(std::ifstream& fpList,
 		std::cout << "np " << np << std::endl;
 		std::cout << "(int) partons_event.size() " << (int) partons_event.size() << std::endl;
 		for (auto it = partons_event.begin(); it != partons_event.end(); ++it) {
-			it->Print();
+			it->Print(false);
 		}
 
 

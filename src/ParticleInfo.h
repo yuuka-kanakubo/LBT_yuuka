@@ -74,7 +74,11 @@ struct Particle {
 		else this->D2piT=8.0*base::pi/qhat_over_T3;
 	}
 
-	void Print(){
+	void Print(const bool printonlyActive){
+		if(printonlyActive==true && this->isActive==false) {
+		std::cout << "------------------ this particle is not actuve: index " << this->index_ << std::endl;
+			return;
+		}
 		std::cout << "----" << std::endl;
 		std::cout 
 			<< "[ index  "

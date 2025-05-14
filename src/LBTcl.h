@@ -12,11 +12,17 @@ class LBTcl{
 
 	private:
 
+		int np_snapshot;
+		void archive_np_snapshot(int val){this->np_snapshot = val;}
+		bool belowCutOff(const double Eloc, const Particle &p);
+
 		LBTConfig& config;
 		double computeScatteringRate(Particle &p, const double PLen, const double T);
 		double computeRadiationProbability(Particle &p, double T, double E);
-		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles);
-		void handleRadiation(Particle &p, std::vector<Particle> &particles);
+		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles_current, 
+				std::vector<Particle> &particles);
+		void handleRadiation(Particle &p, std::vector<Particle> &particles_current, 
+				std::vector<Particle> &particles);
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
 				Particle &p,
@@ -246,7 +252,7 @@ std::cout << "nHQgluon! " << std::endl;
 
 		void linear(
 				const int pid, const double E, const double T,
-				double& RTEg, double& RTEg1, double& RTEg2, double& RTEg3,
+				double& RTEg1, double& RTEg2, double& RTEg3,
 				double& RTEq, double& RTEq3, double& RTEq4, double& RTEq5,
 				double& RTEq6, double& RTEq7, double& RTEq8,
 				double& RTEHQ11, double& RTEHQ12
@@ -306,19 +312,18 @@ std::cout << "nHQgluon! " << std::endl;
 			static const std::array<int, 6> valencePids = {1, 2, 3, -1, -2, -3};
 
 			// Scattering rate components
-			double RTEg, RTEg1, RTEg2, RTEg3;
+			double RTEg1, RTEg2, RTEg3;
 			double RTEq, RTEq3, RTEq4, RTEq5, RTEq6, RTEq7, RTEq8;
 			double RTEHQ11, RTEHQ12;
 
 			linear(initialPid, E, T, 
-					RTEg, RTEg1, RTEg2, RTEg3,
+					RTEg1, RTEg2, RTEg3,
 					RTEq, RTEq3, RTEq4, RTEq5, RTEq6, RTEq7, RTEq8,
 					RTEHQ11, RTEHQ12);
 
 			double a = ran0(&config.rng.NUM1);
 			int b = 0;
 
-			std::cout << "RTEg " << RTEg << std::endl;
 			std::cout << "RTEg1 " << RTEg1 << std::endl;
 			std::cout << "RTEg2 " << RTEg2 << std::endl;
 			std::cout << "RTEg3 " << RTEg3 << std::endl;
@@ -674,9 +679,9 @@ std::cout << "nHQgluon! " << std::endl;
 		void colljet22(
 				const int channel,
 				const Particle &p,
-				Particle &p_rec,
-				Particle &p_med,
-				Particle &p_fin,
+				std::array<double, 4> &pc_rec,
+				std::array<double, 4> &pc_med,
+				std::array<double, 4> &pc_fin,
 				double& qt                               // output: transverse momentum transfer
 			      ) {
 
@@ -688,9 +693,6 @@ std::cout << "nHQgluon! " << std::endl;
 
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-			std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
-			std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
-			std::array<double, 4> pc_fin = {0.,0.,0.,0.};
 
 			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
@@ -783,15 +785,19 @@ std::cout << "nHQgluon! " << std::endl;
 			trans(v_cm, pc_rec);
 			std::cout << "Before pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
+			//Copy initial info
+			pc_fin = pc_jet;
 			LongitudinalMomentumTransfer(t, pc_jet, pc_rec, pc_fin);
 			std::cout << "After pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
-			transback(v_cm, pc_fin);
+			transback(v_cm, pc_jet);
 			transback(v_cm, pc_rec);
+			transback(v_cm, pc_fin);
 
 			//     calculate qt in the rest frame of medium
 			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, 1);
 			double qT = sqrt(pc_fin[1] * pc_fin[1] + pc_fin[2] * pc_fin[2]);
+                        qt = qT;
 			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, -1);
 
 
@@ -805,20 +811,15 @@ std::cout << "nHQgluon! " << std::endl;
 			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
 			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
-			//Putting the info back
-			for(int i=0; i<=3; i++){
-				p_med.P[i] = pc_med[i];
-				p_rec.P[i] = pc_rec[i];
-				p_fin.P[i] = pc_fin[i];
-			}
+
+
+			return;
 		}
 
 
 
 		void LongitudinalMomentumTransfer(const double t, const std::array<double, 4> pc_jet, std::array<double, 4>& pc_rec, std::array<double, 4>& pc_fin){
 
-			//Copy initial info
-			pc_fin = pc_jet;
 
 			double pcm = pc_rec[0];
 			double ran_p_=2.0*base::pi*ran0(&config.rng.NUM1);
@@ -962,7 +963,9 @@ public:
 
 void LBT(std::vector<Particle> &particles, double ti);
 
-LBTcl(LBTConfig& config_in):config(config_in){};
+LBTcl(LBTConfig& config_in):config(config_in){
+
+};
 ~LBTcl(){};
 
 };

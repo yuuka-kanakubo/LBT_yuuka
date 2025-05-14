@@ -115,7 +115,7 @@ double LBTcl::computeCollisionProbability(
 }
 
 
-double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &part_event) {
+double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &part_event, std::vector<Particle> &part_current) {
     int parentIndex = p.index();
 
     // Step 1: Prepare momentum and flow for transformation
@@ -138,9 +138,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     Particle p_med = p;//incoming medium parton
     Particle p_rec = p;
 
-    p_med.pid = pid_med;
-    p_rec.pid = pid_rec;
-
     Particle p_fin = p;
 
     //index
@@ -154,13 +151,42 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
               << ": pid=" << p.pid << " → pid_med=" << pid_med << ", pid_rec=" << pid_rec << std::endl;
 
     double qt;
+    std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
+    std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
+    std::array<double, 4> pc_fin = {0.,0.,0.,0.};
     if (channel == 11 || channel == 12) {
 	    collHQ22(channel, p, p_rec, p_med, p_fin, qt);
             std::cout << "ERROR: refactoring is not completed yet. " << std::endl;
 	    exit(EXIT_FAILURE);
     } else {
-	    colljet22(channel, p, p_rec, p_med, p_fin, qt);
+	    colljet22(channel, p, pc_rec, pc_med, pc_fin, qt);
     }
+
+    //I want to select parton with larger energy
+    //Then, put it to the original location of incoming jet.
+    //IN otiginal LBT, they are exchanging pc0 and pc2 and flavor0 flavor2.
+    if(pc_fin[0]>pc_rec[0]){
+	    for(int i=0; i<=3; i++){
+		    p_fin.P[i] = pc_fin[i];
+		    p_rec.P[i] = pc_rec[i];
+		    p_med.P[i] = pc_med[i];
+	    }
+	    p_fin.pid = p.pid;
+	    p_rec.pid = pid_rec;
+	    p_med.pid = pid_med;
+
+    }else{
+	    for(int i=0; i<=3; i++){
+		    p_fin.P[i] = pc_rec[i];
+		    p_rec.P[i] = pc_fin[i];
+		    p_med.P[i] = pc_med[i];
+	    }
+	    p_fin.pid = pid_rec;
+	    p_rec.pid = p.pid;
+	    p_med.pid = pid_med;
+
+    }
+
 
     //(De)Activate particles after collision
     p.isActive = false;
@@ -172,13 +198,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     p_med.isActive = true;
     p_rec.isActive = true;
 
-    std::cout << "p_rec " << std::endl;
-    p_rec.Print();
-    std::cout << "p_med " <<  std::endl;
-    p_med.Print();
-    std::cout << "p_fin " <<  std::endl;
-    p_fin.Print();
-
     p_med.CAT = 3;//negative
     p_rec.CAT = 2;//recoiled 
 
@@ -187,7 +206,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
     p_rec.parent1 = p.index();
     p_rec.parent2 = p_med.index();
-
 
     p_med.kid1 = p_rec.index();
     p_med.kid2 = p_fin.index();
@@ -203,16 +221,18 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     p_rec.Tfrozen = p.Tfrozen;
     p_rec.copy_thisV_to_vcfrozen(p.vcfrozen);
 
-    part_event.push_back(p_fin);
-    part_event.push_back(p_med);
-    part_event.push_back(p_rec);
+
+    part_current.push_back(p_fin);
+    part_current.push_back(p_rec);
+    part_current.push_back(p_med);
+
     return qt;
 }
 
 
 
 
-void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &part_event) {
+void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &part_current, std::vector<Particle> &part_event) {
 
 	//In original LBT...
 	//pc01 is pc4 (initial jet momentum in 2->2)
@@ -396,6 +416,7 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		p.get_timedilation();
 
 
+
 	} else {
 		// --- Propagation in tau-eta coordinates ---
 
@@ -451,21 +472,39 @@ return;
 }
 
 
+bool LBTcl::belowCutOff(const double Eloc, const Particle &p){
 
+		double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
+		double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+		if(Eloc<sqrt(qhat0)) {
+		      std::cout << __LINE__ << "Eloc < sqrt(qhat0)" << Eloc << "<" << sqrt(qhat0) << std::endl;
+                      return true;
+		  }
+		if(Eloc<config.flow.Ecmcut) {
+			std::cout << __LINE__ << " pc0[0]<Ecmcut " << Eloc <<  "<" << config.flow.Ecmcut<< std::endl;
+			return true;
+		}
+		return false;
+}
 
 
 
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
-    int np_snapshot = part_event.size();  // snapshot of part_event at start of this step "np0"
+
+    archive_np_snapshot((int)part_event.size());  // snapshot of part_event at start of this step "np0"
 
     // Loop over all active part_event at this step
-    for (int i = 0; i < (int)part_event.size(); ++i) {
+    for (int i = 0; i < np_snapshot; ++i) {
         Particle &p = part_event[i];
-	std::cout << "=============== " << i << std::endl;
-	std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
 
+	std::cout << "=============== " << i << std::endl;
         // Skip frozen or inactive part_event
-        if (!p.isActive || p.Vfrozen[0] >= ti) continue;
+	//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled)) particles may join the loop
+	if ((!p.isActive || (!p.isPrimary && p.CAT!=2)) || p.Vfrozen[0] >= ti) continue;
+
+	std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
+	std::cout << ".......             P     " << p.P[0] << std::endl;
+	std::cout << ".......             index " << p.index() << std::endl;
 
         int free = 0;
         double fraction = 0.0;
@@ -476,12 +515,15 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 
 	if (p.CAT != 1 && free == 0) {
+
                 // Boost momentum into local fluid frame
                 std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
                 std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
                 this->trans(vc0, pc0);
                 double Eloc = pc0[0];
-                double PLenloc = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
+		//See if below cut off 
+		if(belowCutOff(Eloc,p)) continue;
+		double PLenloc = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
                 this->transback(vc0, pc0);
 
 
@@ -524,27 +566,62 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
                 // Sample scattering
 		//TODO: should be like, ran0 < probCol, ran0 < probRad in parallel?
 		//      For now, I am just trying to reproduce the results.
-		if (ran0(&config.rng.NUM1) < probTot) {
+		double throwdice = ran0(&config.rng.NUM1);
+		std::cout << "--- throw dice!---  " << throwdice << std::endl;
+		if (throwdice < probTot) {
+
+
+			std::vector<Particle> part_current;
+			int n_newparticle=0;
+
+
 			std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleElasticCollision. " << std::endl;
-			double qt = handleElasticCollision(p, PLenloc, part_event);
+			double qt = handleElasticCollision(p, PLenloc, part_event, part_current);
+			n_newparticle++;//increment for recoiled parton. Medium parton is not counted.
 
-		//CHECKING
-		std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
-		for (auto it = part_event.begin(); it != part_event.end(); ++it) {
-			it->Print();
-		}
-		//CHECKING
+			//CHECKING
+			std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
+			for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+				it->Print(true);
+			}
+			std::cout << "=======event part / current part =======" << std::endl;
+			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+				it->Print(true);
+			}
+			//CHECKING
 
-                        if(config.physics.Kinteraction==0 || (qt<base::epsilon)) continue;
-			if (ran0(&config.rng.NUM1) < probRad / probTot) {
+			std::cout << "--- throw dice for radiation??---  qt " << qt << std::endl;
+			if(config.physics.Kinteraction==0 || (qt<base::epsilon)) continue;
+			double throwdice_rad = ran0(&config.rng.NUM1);
+			std::cout << "--- throw dice for radiation!---  " << throwdice_rad << std::endl;
+			if (throwdice_rad < probRad / probTot) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
 				std::cout << "ti " << ti << "  " << i << std::endl;
 				exit(1);
-				handleRadiation(p, part_event);
+				handleRadiation(p, part_event, part_current);
 			}
+
+			//Set V[0] (=t) for newly created particles.
+			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+                                    it->V[0]=-log(1.0-ran0(&config.rng.NUM1));
+			}
+
+
+			if(n_newparticle==0){
+				std::cout << "ERROR n_newparticle = " << n_newparticle << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			part_event.insert(part_event.begin() + p.index(),  part_current.begin(), part_current.begin() + n_newparticle);
+			part_event.insert(part_event.end(), part_current.begin() + n_newparticle, part_current.end());
+			std::vector<Particle>().swap(part_current);
+			np_snapshot += n_newparticle;
+
+
 		}
 		// Reset radiation tracker
-                p.radng = 0.0;
+		p.radng = 0.0;
+
+
             }//positive and free ==0(in medium)
     }//particle loop
     return;
