@@ -137,14 +137,12 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     // Create new outgoing particles
     Particle p_med = p;//incoming medium parton
     Particle p_rec = p;
-
     Particle p_fin = p;
 
     //index
     p_med.assign_index();
     p_rec.assign_index();
     p_fin.assign_index();
-
 
     // Optionally: log the event
     std::cout << "Elastic collision (channel=" << channel << ") at t=" << p.V[0]
@@ -190,13 +188,13 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
     //(De)Activate particles after collision
     p.isActive = false;
+    p_fin.isActive = true;
+    p_med.isActive = true;
+    p_rec.isActive = true;
 
     p_fin.isPrimary = true;//lost energy, still primary.
     p_med.isPrimary = false;
     p_rec.isPrimary = false;
-    p_fin.isActive = true;
-    p_med.isActive = true;
-    p_rec.isActive = true;
 
     p_med.CAT = 3;//negative
     p_rec.CAT = 2;//recoiled 
@@ -206,6 +204,8 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
     p_rec.parent1 = p.index();
     p_rec.parent2 = p_med.index();
+    p_fin.parent1 = p.index();
+    p_fin.parent2 = p_med.index();
 
     p_med.kid1 = p_rec.index();
     p_med.kid2 = p_fin.index();
@@ -366,6 +366,8 @@ exit(1);
 
 void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fraction) {
 
+
+
 	if (config.clock.tauswitch == 0) {
 		// --- Propagation in t-z coordinates ---
 
@@ -414,7 +416,6 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 
 		//Caclutate some variables used to caluculate interaction rate, radiation rate etc.
 		p.get_timedilation();
-
 
 
 	} else {
@@ -497,10 +498,18 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
     for (int i = 0; i < np_snapshot; ++i) {
         Particle &p = part_event[i];
 
-	std::cout << "=============== " << i << std::endl;
+	std::cout << "===============  i " << i << std::endl;
+	std::cout << ".......             CAT     " << p.CAT << std::endl;
+	std::cout << ".......             index " << p.index() << std::endl;
         // Skip frozen or inactive part_event
-	//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled)) particles may join the loop
-	if ((!p.isActive || (!p.isPrimary && p.CAT!=2)) || p.Vfrozen[0] >= ti) continue;
+	//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled OR medium)) particles may join the loop
+        //medium particle just propagates.
+	if ((!p.isActive || (!p.isPrimary && p.CAT!=2 && p.CAT!=3)) || p.Vfrozen[0] >= ti) continue;
+        if (p.P[0]<base::epsilon){
+		std::cout << "  now this is going to be TERMINATED " << std::endl;
+		for(int k=0;k<=3;k++) p.V[i]=0.0;
+		p.CAT=1;
+	}
 
 	std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
 	std::cout << ".......             P     " << p.P[0] << std::endl;
@@ -510,8 +519,39 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
         double fraction = 0.0;
 
 
-        // Propagate parton
-	this->propagateParticle(p, ti, free, fraction);
+        // Propagate parton.
+	//In the future this should be just this->propagateParticle(p, ti, free, fraction);
+	//Following is for the consistency between this code and original LBT.
+	if(p.CAT!=3 && p.CAT!=1){
+		this->propagateParticle(p, ti, free, fraction);
+		if((p.parent1>0 || p.parent2>0) && p.CAT==2){
+			//find medium parent of this recoiled one
+                        int medpart=-1;
+			for(int j=0; j<(int)part_event.size(); j++){
+				if (part_event[j].index() == p.parent1 || part_event[j].index() == p.parent2){
+                                          if(part_event[j].isActive && part_event[j].CAT==3){
+						  this->propagateParticle(part_event[j], ti, free, fraction);
+						  medpart = part_event[j].index();
+						  std::cout << "CHEK NEGATIVE PARTON PROPAGATION ========" << std::endl;
+						  part_event[j].Print(true);
+					  }
+				}
+			}
+
+                        if (medpart<0){
+				std::cout << "Missing partner " << std::endl;
+			}else{
+				std::cout << "Missing partner FOUND --> " << medpart << std::endl;
+			}
+		}
+	}
+	std::cout << "AFTER PROPAGATION " << std::endl;
+	p.Print(true);
+	if(p.CAT==3){
+		std::cout << "THIS IS MEDIUM PARTON -- just propagation. " << std::endl;
+		continue;
+	}
+
 
 
 	if (p.CAT != 1 && free == 0) {
