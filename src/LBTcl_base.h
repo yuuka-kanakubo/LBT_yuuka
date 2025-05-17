@@ -45,6 +45,31 @@ inline double get_mass(const std::array<double, 4>& p) {
 
 
 
+inline double tau_f(const double x0g, const double y0g, const double energy, const double mass) {
+	return 2.0*energy*x0g*(1.0-x0g)/((x0g*y0g*energy)*(x0g*y0g*energy)+x0g*x0g*mass*mass);
+}
+
+inline double splittingP(const int parID, const double z0g) {
+
+      if(parID==21) return 2.0*pow(1.0-z0g+pow(z0g,2),3)/z0g/(1.0-z0g);
+      else return (1.0-z0g)*(2.0-2.0*z0g+z0g*z0g)/z0g;
+}
+
+
+inline double dNg_over_dxdydt(int parID, double x0g, double y0g, double energy, double mass, double temp_med, double alpha_s, double qhat_over_T3, double Tdiff) {
+
+	double tauFnc = tau_f(x0g,y0g,energy,mass);
+	double qhatFnc = qhat_over_T3*pow(temp_med,3);   // no longer have CF factor, taken out in splittingP too.
+
+	return 4.0/base::pi*base::CA*alpha_s*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::sctr),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::sctr;
+
+	//TODO: Maybe in the future update on alphas for HQ?
+	//return 4.0/base::pi*base::CA*alphasHQ(x0g*y0g*energy,temp_med)*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::sctr),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::sctr;
+
+}
+
+
+
 inline std::array <double, 4> get_centerofmass(const std::array<double, 4> p0_, const std::array<double, 4> p2_){
 
 	std::array <double, 4> vc_;
@@ -164,6 +189,28 @@ inline double alphas0(const int Kalphas, const double T){
        }
        return X;
 }
+
+// functions for gluon radiation from heavy quark
+//double alphasHQ(const double kTFnc, const double tempFnc) {
+//
+//	//      double kTEff,error_para,resultFnc;
+//	//
+//	//      error_para=1.0;
+//	//
+//	//      if(kTFnc<pi*tempFnc*error_para) {
+//	//         kTEff=pi*tempFnc*error_para;
+//	//      } else {
+//	//         kTEff=kTFnc;
+//	//      }
+//	//
+//	//      resultFnc=4.0*pi/(11.0-2.0*nflavor(kTEff)/3.0)/2.0/log(kTEff/lambdas(kTEff));
+//	//
+//	//      return(resultFnc);
+//	///return(alphas);
+//}
+
+
+
 
 inline double DebyeMass2(const int Kqhat0, const double alphas, const double T){
 

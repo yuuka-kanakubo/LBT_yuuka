@@ -40,6 +40,7 @@ double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const dou
 	qhat_over_T3 *= Kfactor;  // Apply correction
 
 	p.get_D2piT(qhat_over_T3);
+        p.qhat_over_T3 = qhat_over_T3;
 
 	// --- Step 5: Multiply by T^3 to get real qhat ---
 	return qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)
@@ -232,10 +233,12 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
 
 
-void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &part_current, std::vector<Particle> &part_event) {
+void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &part_current, std::vector<Particle> &part_event) {
+
+	// Step 1: Prepare momentum and flow
 
 	//In original LBT...
-	//pc01 is pc4 (initial jet momentum in 2->2)
+	//pc01 is pc4 (initial jet momentum in 2->2), i.e., &p
 	//pc2: "recoiled" particle. will be overwritten by pc3 anyways.
 	//pc3: scattering "medium" particle. ==> apparently reused from the handleCollision
 	//pc4: radiated gluon momentum will be calculated in this function.
@@ -244,65 +247,44 @@ void LBTcl::handleRadiation(Particle &p, std::vector<Particle> &part_current, st
 	std::array<double, 4> pc_fin = {0., 0., 0., 0.};
 
 	//Looking for the missing partner!
-	//Then, what I need to do here is to find the "scattering medium particle" in part_event.
-	//I am tracing pc4 (the incoming jet). So, I know daughters of pc4.
-	//Once I know the daughters of pc4, I can find their moms indices. 
+	//What I need to do here is to find the "scattering medium particle" in part_event.
+	//I am tracing all the family tree of p So, I know kids of pc4.
 	//The one has medium tag (CAT = "medium") is going to be pc3. 
 
-	//Here I hope kid1 is allocated in part_event[i_kid1]
 	//Is this scattered medium parton?
 	std::array<double, 4> pc_med = {0., 0., 0., 0.};
-	if(part_event[p.kid1].CAT == 3){
-		for(int i = 1; i<=3 ; i++) pc_med[i] =  part_event[p.kid1].P[i];
-	}else if(part_event[p.kid2].CAT == 3){
-		for(int i = 1; i<=3 ; i++) pc_med[i] =  part_event[p.kid1].P[i];
-	}else{
+	int partner=-1;
+	Particle p_med;
+	for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+		if(it->CAT==3 && (it->kid1==p.kid1 || it->kid1==p.kid2)){
+			partner = it->index();
+			p_med = *it;
+			std::cout << "FOUND partner! -->  " << partner << std::endl;  
+		}
+	}
+	if(partner<0){
 		std::cout << "ERROR! Couldn't find the missing medium partner... " << std::endl; 
 		std::cout << "p.kid1 " << p.kid1 << std::endl; 
 		std::cout << "p.kid2 " << p.kid2 << std::endl; 
-		std::cout << "part_event[p.kid1].CAT " << part_event[p.kid1].CAT << std::endl; 
-		std::cout << "part_event[p.kid2].CAT " << part_event[p.kid2].CAT << std::endl; 
 		exit(EXIT_FAILURE);
 	}
+	for(int i = 0; i<=3 ; i++) pc_med[i] =  p_med.P[i];
 
 
-// Step 1: Prepare momentum and flow
-    std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
-    std::array<double, 4> v_flow = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
-exit(1);
-    trans(v_flow, pc_jet);
-    double Eloc = pc_jet[0];
-    transback(v_flow, pc_jet);
+	// Step 2: Call radiation kernel
+	collHQ23(p, qt, pc_med, pc_rec, pc_rad, pc_fin);
+	//TODO: why?    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, locqt, icl23, p.Tint_lrf, Ejp, iclrad);
+	exit(1);
 
-    double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
-    double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
-
-    if (Eloc <= 2.0 * sqrt(qhat0)) return;
-
-    // Step 2: Call radiation kernel
-
-
-//TODO
-//    collHQ23(p.pid, p.Tfrozen, qhat0, vc0, pc0, pc2, pc3, pc4, qt,
-//		    icl23, p.Tint_lrf, Eloc, p.max_Ng, lim_low, lim_int, iclrad);
-//    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, locqt, icl23, p.Tint_lrf, Ejp, iclrad);
-
-    // Step 3: Process radiation if successful
- //   if (icl23 != 1 && iclrad != 1) {
-        // Deactivate parent and update momentum
-        for (int j = 0; j < 4; ++j) {
-            p.P[j] = pc_jet[j];
-        }
+	// Step 3: Process radiation if successful
+	//   if (icl23 != 1 && iclrad != 1) {
+	// Deactivate parent and update momentum
         p.isActive = false;
 
         // Add radiated gluon
         Particle gluon;
         for (int j = 0; j < 4; ++j) {
-            gluon.P[j] = pc_jet[j];
+            gluon.P[j] = pc_rad[j];
             gluon.V[j] = p.V[j];
         }
         gluon.pid = 21;
@@ -519,9 +501,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
         double fraction = 0.0;
 
 
-        // Propagate parton.
+        //Propagate parton.
 	//In the future this should be just this->propagateParticle(p, ti, free, fraction);
 	//Following is for the consistency between this code and original LBT.
+	//=========================================
 	if(p.CAT!=3 && p.CAT!=1){
 		this->propagateParticle(p, ti, free, fraction);
 		if((p.parent1>0 || p.parent2>0) && p.CAT==2){
@@ -537,18 +520,17 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 					  }
 				}
 			}
-
                         if (medpart<0){
-				std::cout << "Missing partner " << std::endl;
+				std::cout << "ERROR: Missing partner " << std::endl;
+				exit(EXIT_FAILURE);
 			}else{
 				std::cout << "Missing partner FOUND --> " << medpart << std::endl;
 			}
 		}
 	}
-	std::cout << "AFTER PROPAGATION " << std::endl;
-	p.Print(true);
 	if(p.CAT==3){
 		std::cout << "THIS IS MEDIUM PARTON -- just propagation. " << std::endl;
+		free=0;
 		continue;
 	}
 
@@ -578,29 +560,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "probRad " << probRad << std::endl;
 		std::cout << "probCol " << probCol << std::endl;
                 double probTot = probCol + probRad;
-
-/*
-		if (ran0(&config.rng.NUM1) < probTot) {
-
-			if (ran0(&config.rng.NUM1) < probRad / probTot) {
-                                          do Radiation
-			  }else{
-					  do Collision
-			  } 
-	        }
-
-
-		if (ran0(&config.rng.NUM1) < probTot) {
-
-					  do Collision
-
-			if (ran0(&config.rng.NUM1) < probRad / probTot) {
-                                          do Radiation
-			  } 
-	        }
-
-
-*/
 
 
                 // Sample scattering
@@ -636,9 +595,8 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 			std::cout << "--- throw dice for radiation!---  " << throwdice_rad << std::endl;
 			if (throwdice_rad < probRad / probTot) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
-				std::cout << "ti " << ti << "  " << i << std::endl;
+				handleRadiation(p, qt, part_event, part_current);
 				exit(1);
-				handleRadiation(p, part_event, part_current);
 			}
 
 			//Set V[0] (=t) for newly created particles.

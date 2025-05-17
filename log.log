@@ -42,7 +42,7 @@ HQener_gn 500
 124.4    413900
 126.9    414200
 572.8    6.01e+08
-Program starts at: Fri May 16 16:06:45 2025
+Program starts at: Fri May 16 17:32:32 2025
 The end of initialize () 
 /home/yuuka/lbt_updating/LBT_sc/src/main_functions.cpp(371)After reading
 np 5
@@ -84,13 +84,6 @@ vcfrozen       0.00000000     0.00000000     0.00000000     0.00000000
 :):):):) Particle ....... 0   at time 0.70000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.37265726    -0.04371517     0.08469489    -0.03026152
-Vfrozen       0.70000000    -0.04371517     0.08469489    -0.03026152
-vcfrozen       0.00000000     0.00000000     0.00000000    -0.04323075
 RTE: 0.16240280
 qhat 0.21080445
 nHQgluon! 
@@ -109,13 +102,6 @@ probCol 0.03989998
 :):):):) Particle ....... 1   at time 0.70000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V       0.46203078     0.00829812    -0.07436607    -0.06633874
-Vfrozen       0.70000000     0.00829812    -0.07436607    -0.06633874
-vcfrozen       0.00000000     0.00000000     0.00000000    -0.09476963
 RTE: 0.34894769
 qhat 0.36443416
 nHQgluon! 
@@ -137,13 +123,6 @@ probCol 0.07999217
 :):):):) Particle ....... 3   at time 0.70000000
 .......             P     13.30259126
 .......             index 3
-AFTER PROPAGATION 
-----
-[ index       3],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      13.30259126    -2.79833000    -1.68049000    12.89590000     0.00000000
- V       0.32594678    -0.04796937    -0.02880720     0.09694277
-Vfrozen       0.70000000    -0.04796937    -0.02880720     0.09694277
-vcfrozen       0.00000000     0.00000000     0.00000000     0.13848967
 RTE: 0.31831285
 qhat 0.37453713
 nHQgluon! 
@@ -162,13 +141,6 @@ probCol 0.08994332
 :):):):) Particle ....... 4   at time 0.70000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.42927055     0.11058654    -0.04254328    -0.09725272
-Vfrozen       0.70000000     0.11058654    -0.04254328    -0.09725272
-vcfrozen       0.00000000     0.00000000     0.00000000    -0.13893245
 RTE: 0.14898426
 qhat 0.14337509
 nHQgluon! 
@@ -188,13 +160,6 @@ probCol 0.03269665
 :):):):) Particle ....... 0   at time 0.80000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.29021929    -0.08743034     0.16938978    -0.06052304
-Vfrozen       0.80000000    -0.08743034     0.16938978    -0.06052304
-vcfrozen       0.00000000    -0.00112069     0.00086928    -0.07565380
 RTE: 0.14402100
 qhat 0.15001832
 nHQgluon! 
@@ -213,13 +178,6 @@ probCol 0.03497383
 :):):):) Particle ....... 1   at time 0.80000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V       0.28489998     0.01659623    -0.14873215    -0.13267748
-Vfrozen       0.80000000     0.01659623    -0.14873215    -0.13267748
-vcfrozen       0.00000000     0.00025746    -0.00021280    -0.16584685
 RTE: 0.31029318
 qhat 0.25840699
 nHQgluon! 
@@ -241,13 +199,6 @@ probCol 0.06801738
 :):):):) Particle ....... 3   at time 0.80000000
 .......             P     13.30259126
 .......             index 3
-AFTER PROPAGATION 
-----
-[ index       3],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      13.30259126    -2.79833000    -1.68049000    12.89590000     0.00000000
- V       0.16436666    -0.06900535    -0.04144000     0.19388553
-Vfrozen       0.80000000    -0.06900535    -0.04144000     0.19388553
-vcfrozen       0.00000000    -0.00100651    -0.00001416     0.24235692
 RTE: 0.28300043
 qhat 0.30138223
 nHQgluon! 
@@ -266,13 +217,6 @@ probCol 0.08359941
 :):):):) Particle ....... 4   at time 0.80000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.35364402     0.13231317    -0.05090164    -0.19450544
-Vfrozen       0.80000000     0.13231317    -0.05090164    -0.19450544
-vcfrozen       0.00000000     0.00025324    -0.00020932    -0.24313180
 RTE: 0.13093441
 qhat 0.10012984
 nHQgluon! 
@@ -292,13 +236,6 @@ probCol 0.02634495
 :):):):) Particle ....... 0   at time 0.90000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.21711219    -0.13114550     0.25408467    -0.09078457
-Vfrozen       0.90000000    -0.13114550     0.25408467    -0.09078457
-vcfrozen       0.00000000    -0.00111818     0.00086734    -0.10087174
 RTE: 0.14400537
 qhat 0.14985919
 nHQgluon! 
@@ -317,13 +254,6 @@ probCol 0.03477930
 :):):):) Particle ....... 1   at time 0.90000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V       0.12739075     0.02489435    -0.22309822    -0.19901622
-Vfrozen       0.90000000     0.02489435    -0.22309822    -0.19901622
-vcfrozen       0.00000000     0.00025461    -0.00021045    -0.22112913
 RTE: 0.30992754
 qhat 0.25653057
 nHQgluon! 
@@ -345,13 +275,6 @@ probCol 0.06596272
 :):):):) Particle ....... 3   at time 0.90000000
 .......             P     13.30259126
 .......             index 3
-AFTER PROPAGATION 
-----
-[ index       3],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      13.30259126    -2.79833000    -1.68049000    12.89590000     0.00000000
- V       0.02071161    -0.09004133    -0.05407280     0.29082830
-Vfrozen       0.90000000    -0.09004133    -0.05407280     0.29082830
-vcfrozen       0.00000000    -0.00098178    -0.00001381     0.32314256
 RTE: 0.28083620
 qhat 0.33638942
 nHQgluon! 
@@ -370,13 +293,6 @@ probCol 0.08707696
 :):):):) Particle ....... 4   at time 0.90000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.28717986     0.15403981    -0.05926000    -0.29175815
-Vfrozen       0.90000000     0.15403981    -0.05926000    -0.29175815
-vcfrozen       0.00000000     0.00024697    -0.00020414    -0.32417573
 RTE: 0.12923973
 qhat 0.09963546
 nHQgluon! 
@@ -396,13 +312,6 @@ probCol 0.02463486
 :):):):) Particle ....... 0   at time 1.00000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.14401301    -0.17486067     0.33877956    -0.12104609
-Vfrozen       1.00000000    -0.17486067     0.33877956    -0.12104609
-vcfrozen       0.00000000    -0.00115920     0.00106314    -0.12104609
 RTE: 0.14385984
 qhat 0.14933799
 nHQgluon! 
@@ -421,13 +330,6 @@ probCol 0.03418013
 :):):):) Particle ....... 1   at time 1.00000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V      -0.02993288     0.03319246    -0.29746430    -0.26535495
-Vfrozen       1.00000000     0.03319246    -0.29746430    -0.26535495
-vcfrozen       0.00000000     0.00025171    -0.00020805    -0.26535495
 RTE: 0.30965692
 qhat 0.25514479
 nHQgluon! 
@@ -449,13 +351,6 @@ probCol 0.06318650
 :):):):) Particle ....... 3   at time 1.00000000
 .......             P     13.30259126
 .......             index 3
-AFTER PROPAGATION 
-----
-[ index       3],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      13.30259126    -2.79833000    -1.68049000    12.89590000     0.00000000
- V      -0.12184483    -0.11107730    -0.06670560     0.38777107
-Vfrozen       1.00000000    -0.11107730    -0.06670560     0.38777107
-vcfrozen       0.00000000    -0.00095626    -0.00001345     0.38777107
 RTE: 0.27916353
 qhat 0.36953161
 nHQgluon! 
@@ -474,13 +369,6 @@ probCol 0.08846351
 :):):):) Particle ....... 4   at time 1.00000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.22157593     0.17576644    -0.06761836    -0.38901087
-Vfrozen       1.00000000     0.17576644    -0.06761836    -0.38901087
-vcfrozen       0.00000000     0.00024051    -0.00019879    -0.38901087
 RTE: 0.12792923
 qhat 0.10095352
 nHQgluon! 
@@ -500,13 +388,6 @@ probCol 0.02356310
 :):):):) Particle ....... 0   at time 1.10000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.07098771    -0.21857584     0.42347445    -0.15130761
-Vfrozen       1.10000000    -0.21857584     0.42347445    -0.15130761
-vcfrozen       0.00000000    -0.00231249     0.00190455    -0.13755237
 RTE: 0.13269524
 qhat 0.11858960
 nHQgluon! 
@@ -525,13 +406,6 @@ probCol 0.03153782
 :):):):) Particle ....... 1   at time 1.10000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V      -0.18711913     0.04149058    -0.37183037    -0.33169369
-Vfrozen       1.10000000     0.04149058    -0.37183037    -0.33169369
-vcfrozen       0.00000000     0.00052393    -0.00140654    -0.30153972
 RTE: 0.30924536
 qhat 0.25356948
 nHQgluon! 
@@ -553,13 +427,6 @@ probCol 0.06197091
 :):):):) Particle ....... 3   at time 1.10000000
 .......             P     13.30259126
 .......             index 3
-AFTER PROPAGATION 
-----
-[ index       3],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      13.30259126    -2.79833000    -1.68049000    12.89590000     0.00000000
- V      -0.26355221    -0.13211328    -0.07933841     0.48471383
-Vfrozen       1.10000000    -0.13211328    -0.07933841     0.48471383
-vcfrozen       0.00000000    -0.00093129    -0.00001310     0.44064894
 RTE: 0.27782338
 qhat 0.39988639
 nHQgluon! 
@@ -572,7 +439,7 @@ nHQgluon!
 probRad 0.02745591
 probCol 0.09101620
 --- throw dice!---  0.10588808
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(618)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
 RTEg1 0.15967272
 RTEg2 0.00089444
 RTEg3 0.11725709
@@ -594,7 +461,7 @@ pc_jet(p4) 13.30259126  -2.79833000  -1.68049000  12.89590000
 pc_med(p3) 0.46565019  0.36956250  0.23887069  -0.15229727
 pc_rec(p2) 1.83960753  -0.15880507  1.24471860  1.34521835
 pc_fin(p0) 11.92863393  -2.26996243  -2.68633792  11.39838438
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(623)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -650,13 +517,6 @@ vcfrozen       0.00000000    -0.00093129    -0.00001310     0.44064894
 :):):):) Particle ....... 5   at time 1.10000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.15663724     0.19749307    -0.07597672    -0.48626359
-Vfrozen       1.10000000     0.19749307    -0.07597672    -0.48626359
-vcfrozen       0.00000000     0.00023418    -0.00019356    -0.44205781
 RTE: 0.12687863
 qhat 0.10361582
 nHQgluon! 
@@ -676,13 +536,6 @@ probCol 0.02310603
 :):):):) Particle ....... 0   at time 1.20000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V       0.00362972    -0.26229101     0.50816934    -0.18156913
-Vfrozen       1.20000000    -0.26229101     0.50816934    -0.18156913
-vcfrozen       0.00000000    -0.00230781     0.00190069    -0.15130761
 RTE: 0.13268965
 qhat 0.11853876
 nHQgluon! 
@@ -701,13 +554,6 @@ probCol 0.03105327
 :):):):) Particle ....... 1   at time 1.20000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V      -0.34409648     0.04978869    -0.44619645    -0.39803243
-Vfrozen       1.20000000     0.04978869    -0.44619645    -0.39803243
-vcfrozen       0.00000000     0.00075058    -0.00262832    -0.33169369
 RTE: 0.28584210
 qhat 0.20149514
 nHQgluon! 
@@ -729,13 +575,6 @@ probCol 0.05574176
 :):):):) Particle ....... 3   at time 1.20000000
 .......             P     11.92863393
 .......             index 7
-AFTER PROPAGATION 
-----
-[ index       7],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      11.92863393    -2.26996243    -2.68633792    11.39838438     0.00000000
- V       2.33186025    -0.15114280    -0.10185849     0.58026865
-Vfrozen       1.20000000    -0.15114280    -0.10185849     0.58026865
-vcfrozen       0.00000000    -0.00186462    -0.00028055     0.48355721
 RTE: 0.25542687
 qhat 0.38022391
 nHQgluon! 
@@ -757,13 +596,6 @@ probCol 0.09965747
 :):):):) Particle ....... 5   at time 1.20000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.09223184     0.21921971    -0.08433508    -0.58351631
-Vfrozen       1.20000000     0.21921971    -0.08433508    -0.58351631
-vcfrozen       0.00000000     0.00022813    -0.00018856    -0.48626359
 RTE: 0.12601338
 qhat 0.10722725
 nHQgluon! 
@@ -790,14 +622,7 @@ CHEK NEGATIVE PARTON PROPAGATION ========
 Vfrozen       1.20000000    -0.05274845    -0.02804010     0.45200746
 vcfrozen       0.00000000    -0.00197334    -0.00029691     0.37667289
 Missing partner FOUND --> 5
-AFTER PROPAGATION 
-----
-[ index       6],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     2] [isActive / isPrimary      1/     0]
- P       1.83960753    -0.15880507     1.24471860     1.34521835     0.00000000
- V       1.75716897    -0.14074583    -0.01167622     0.55783912
-Vfrozen       1.20000000    -0.14074583    -0.01167622     0.55783912
-vcfrozen       0.00000000    -0.00188607    -0.00028378     0.46486594
-485 pc0[0]<Ecmcut 1.37152000<2.00000000
+473 pc0[0]<Ecmcut 1.37152000<2.00000000
 ===============  i 7
 .......             CAT     3
 .......             index 5
@@ -808,13 +633,6 @@ vcfrozen       0.00000000    -0.00188607    -0.00028378     0.46486594
 :):):):) Particle ....... 0   at time 1.30000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V      -0.06372543    -0.30600618     0.59286423    -0.21183065
-Vfrozen       1.30000000    -0.30600618     0.59286423    -0.21183065
-vcfrozen       0.00000000    -0.00472715     0.00200000    -0.16294666
 RTE: 0.13250322
 qhat 0.11802426
 nHQgluon! 
@@ -833,13 +651,6 @@ probCol 0.03092374
 :):):):) Particle ....... 1   at time 1.30000000
 .......             P     27.80125223
 .......             index 1
-AFTER PROPAGATION 
-----
-[ index       1],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      27.80125223     2.30698000   -20.67470000   -18.44300000     0.00000000
- V      -0.48919399     0.05808681    -0.52056252    -0.46437117
-Vfrozen       1.30000000     0.05808681    -0.52056252    -0.46437117
-vcfrozen       0.00000000     0.00074313    -0.00260223    -0.35720859
 RTE: 0.28573044
 qhat 0.20097773
 nHQgluon! 
@@ -852,7 +663,7 @@ nHQgluon!
 probRad 0.03963300
 probCol 0.05511269
 --- throw dice!---  0.06238642
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(618)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
 RTEg1 0.16524546
 RTEg2 0.00058254
 RTEg3 0.11990219
@@ -874,7 +685,7 @@ pc_jet(p4) 27.80125223  2.30698000  -20.67470000  -18.44300000
 pc_med(p3) 0.36421329  -0.15919402  0.05525757  0.32288572
 pc_rec(p2) 26.20201957  0.78496107  -20.08092043  -16.81327750
 pc_fin(p0) 1.96344596  1.36282491  -0.53852201  -1.30683678
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(623)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -946,13 +757,6 @@ vcfrozen       0.00000000     0.00074313    -0.00260223    -0.35720859
 :):):):) Particle ....... 4   at time 1.30000000
 .......             P     11.92863393
 .......             index 7
-AFTER PROPAGATION 
-----
-[ index       7],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      11.92863393    -2.26996243    -2.68633792    11.39838438     0.00000000
- V       2.20220195    -0.17017233    -0.12437857     0.67582347
-Vfrozen       1.30000000    -0.17017233    -0.12437857     0.67582347
-vcfrozen       0.00000000    -0.00181975    -0.00027380     0.51986421
 RTE: 0.25196503
 qhat 0.39922398
 nHQgluon! 
@@ -974,13 +778,6 @@ probCol 0.09965653
 :):):):) Particle ....... 6   at time 1.30000000
 .......             P     20.84188531
 .......             index 4
-AFTER PROPAGATION 
-----
-[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
- V       0.02826566     0.24094634    -0.09269344    -0.68076903
-Vfrozen       1.30000000     0.24094634    -0.09269344    -0.68076903
-vcfrozen       0.00000000     0.00031512    -0.00052337    -0.52366848
 RTE: 0.11650991
 qhat 0.08885719
 nHQgluon! 
@@ -1007,14 +804,7 @@ CHEK NEGATIVE PARTON PROPAGATION ========
 Vfrozen       1.30000000     0.02661639     0.02325822     0.41930110
 vcfrozen       0.00000000     0.00009483     0.00097314     0.32253930
 Missing partner FOUND --> 5
-AFTER PROPAGATION 
-----
-[ index       6],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     2] [isActive / isPrimary      1/     0]
- P       1.83960753    -0.15880507     1.24471860     1.34521835     0.00000000
- V       1.75716897    -0.14937838     0.05598596     0.63096441
-Vfrozen       1.30000000    -0.14937838     0.05598596     0.63096441
-vcfrozen       0.00000000    -0.00197643     0.00103945     0.48535724
-485 pc0[0]<Ecmcut 1.35545081<2.00000000
+473 pc0[0]<Ecmcut 1.35545081<2.00000000
 ===============  i 8
 .......             CAT     3
 .......             index 5
@@ -1025,13 +815,6 @@ vcfrozen       0.00000000    -0.00197643     0.00103945     0.48535724
 :):):):) Particle ....... 0   at time 1.40000000
 .......             P     68.87723696
 .......             index 0
-AFTER PROPAGATION 
-----
-[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
- V      -0.13098595    -0.34972135     0.67755912    -0.24209217
-Vfrozen       1.40000000    -0.34972135     0.67755912    -0.24209217
-vcfrozen       0.00000000    -0.00743897     0.00419578    -0.17292298
 RTE: 0.12432164
 qhat 0.09827851
 nHQgluon! 
@@ -1050,13 +833,6 @@ probCol 0.02866874
 :):):):) Particle ....... 1   at time 1.40000000
 .......             P     26.20201957
 .......             index 10
-AFTER PROPAGATION 
-----
-[ index      10],  [parent1 / parent2       1/     8],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      26.20201957     0.78496107   -20.08092043   -16.81327750     0.00000000
- V       0.55908496     0.06108261    -0.59720135    -0.52853904
-Vfrozen       1.40000000     0.06108261    -0.59720135    -0.52853904
-vcfrozen       0.00000000     0.00073674    -0.00257987    -0.37752788
 RTE: 0.28521277
 qhat 0.19861416
 nHQgluon! 
@@ -1081,13 +857,6 @@ probCol 0.05297204
 :):):):) Particle ....... 4   at time 1.40000000
 .......             P     11.92863393
 .......             index 7
-AFTER PROPAGATION 
-----
-[ index       7],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
- P      11.92863393    -2.26996243    -2.68633792    11.39838438     0.00000000
- V       2.07430092    -0.18920186    -0.14689865     0.77137829
-Vfrozen       1.40000000    -0.18920186    -0.14689865     0.77137829
-vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
 RTE: 0.24901382
 qhat 0.41591137
 nHQgluon! 
@@ -1100,7 +869,7 @@ nHQgluon!
 probRad 0.04711707
 probCol 0.09721345
 --- throw dice!---  0.14052379
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(618)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
 RTEg1 0.14309187
 RTEg2 0.00082673
 RTEg3 0.10509501
@@ -1122,7 +891,7 @@ pc_jet(p4) 11.92863393  -2.26996243  -2.68633792  11.39838438
 pc_med(p3) 1.87259200  1.05000385  0.57331974  1.44062390
 pc_rec(p2) 4.26759399  1.05764897  0.80873101  4.05458891
 pc_fin(p0) 9.53363195  -2.27760755  -2.92174918  8.78441937
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(623)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -1195,7 +964,9 @@ Vfrozen       1.94789796    -0.18920186    -0.14689865     0.77137829
 vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
 --- throw dice for radiation??---  qt 0.97470467
 --- throw dice for radiation!---  0.28444088
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(638)Calling handleRadiation. 
-ti 1.40000000  4
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(603)Calling handleRadiation. 
+FOUND partner! -->  11
+pc_jet(p4) 11.92863393  -2.26996243  -2.68633792  11.39838438
+pc_med(p2) 1.87259200  1.05000385  0.57331974  1.44062390
  EOF reached in CCNU-hydro file
- Max tau in the hydro file:    12.899999999999999     
+ M p_med = it;ax tau in the hydro file:    12.899999999999999     
