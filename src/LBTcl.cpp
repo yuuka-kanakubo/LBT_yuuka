@@ -233,12 +233,12 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
 
 
-void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &part_current, std::vector<Particle> &part_event) {
+void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &part_event, std::vector<Particle> &part_current) {
 
 	// Step 1: Prepare momentum and flow
 
 	//In original LBT...
-	//pc01 is pc4 (initial jet momentum in 2->2), i.e., &p
+	//pc01 is pc4 (initial jet momentum in 2->2), i.e., &p (even before the momentum exchange in 2->2)
 	//pc2: "recoiled" particle. will be overwritten by pc3 anyways.
 	//pc3: scattering "medium" particle. ==> apparently reused from the handleCollision
 	//pc4: radiated gluon momentum will be calculated in this function.
@@ -255,7 +255,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 	std::array<double, 4> pc_med = {0., 0., 0., 0.};
 	int partner=-1;
 	Particle p_med;
-	for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+	for (auto it = part_current.rbegin(); it != part_current.rend(); ++it) {
 		if(it->CAT==3 && (it->kid1==p.kid1 || it->kid1==p.kid2)){
 			partner = it->index();
 			p_med = *it;
@@ -271,22 +271,60 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 	for(int i = 0; i<=3 ; i++) pc_med[i] =  p_med.P[i];
 
 
+	//Find recoiled parton in 2->2, i.e. kid of p (leading parton in 2->2)
+	int rec_kid=-1;
+	int fin_kid=-1;
+	Particle *p_rec_ptr = nullptr;
+	Particle *p_fin_ptr = nullptr;
+	bool FOUND1 = false;
+	bool FOUND2 = false;
+	for (auto it = part_current.rbegin(); it != part_current.rend(); ++it) {
+		if((it->index()==p.kid1 || it->index()==p.kid2)){
+			if(it->CAT==2){
+				rec_kid = it->index();
+				p_rec_ptr = &(*it);
+				std::cout << "FOUND kid(rec)! -->  " << rec_kid << std::endl;  
+				FOUND1 = true;
+			}else if(it->CAT==0){
+				fin_kid = it->index();
+				p_fin_ptr = &(*it);
+				std::cout << "FOUND kid(fin)! -->  " << fin_kid << std::endl;  
+				FOUND2 = true;
+			}
+			if(FOUND1 && FOUND2) break;
+		}
+	}
+	if(rec_kid<0 || fin_kid<0){
+		std::cout << "ERROR! Couldn't find the missing kids... " << std::endl; 
+		std::cout << "p.kid1 " << p.kid1 << std::endl; 
+		std::cout << "p.kid2 " << p.kid2 << std::endl; 
+		exit(EXIT_FAILURE);
+	}
+
+
 	// Step 2: Call radiation kernel
-	collHQ23(p, qt, pc_med, pc_rec, pc_rad, pc_fin);
+	//returns pc_rec, pc_rad, pc_fin
+	bool success23 = collHQ23(p, qt, pc_med, pc_rec, pc_rad, pc_fin);
 	//TODO: why?    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, locqt, icl23, p.Tint_lrf, Ejp, iclrad);
-	exit(1);
+
+
+	//Step 2.5: Additinal radiation or not?
+       int nrad = KPoisson(p.radng);
+
+
 
 	// Step 3: Process radiation if successful
 	//   if (icl23 != 1 && iclrad != 1) {
-	// Deactivate parent and update momentum
-        p.isActive = false;
 
-        // Add radiated gluon
+        // Add radiated gluon: pc_rad
         Particle gluon;
+        gluon.assign_index();
         for (int j = 0; j < 4; ++j) {
             gluon.P[j] = pc_rad[j];
             gluon.V[j] = p.V[j];
+            gluon.Vfrozen[j] = p.V[j];
         }
+        gluon.V[0] = -log(1.0-ran0(&config.rng.NUM1));
         gluon.pid = 21;
         gluon.CAT = 4;
         gluon.Tfrozen = p.Tfrozen;
@@ -298,24 +336,63 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
         gluon.isPrimary = false;
         gluon.isActive = true;
         gluon.parent1 = p.index();
-        //gluon.parent2 = p.index();
-        gluon.assign_index();
-        part_event.push_back(gluon);
-//
-//        // Step 4: Handle multiple gluons (Poisson) for HQ
-//        int nrad = KPoisson(p.radng);
-//        while (--nrad > 0) {
+        gluon.parent2 = partner;//medium partner of p (leading parton)
+        part_current.push_back(gluon);
+
+
+	//Overwriting recoiled parton info in 2->2
+	if (p_rec_ptr) {
+		Particle& p_rec = *p_rec_ptr;  // Create a reference when needed
+		for (int j = 0; j < 4; ++j) {
+			p_rec.P[j] = pc_rec[j];
+		}
+	}else{
+		std::cout << "ERROR: p_rec_ptr = nullptr. " << std::endl;
+	}
+
+	//Overwriting final state parton info in 2->2
+	if (p_fin_ptr) {
+		Particle& p_fin = *p_fin_ptr;  // Create a reference when needed
+		for (int j = 0; j < 4; ++j) {
+			p_fin.P[j] = pc_fin[j];
+		}
+	}else{
+		std::cout << "ERROR: p_fin_ptr = nullptr. " << std::endl;
+	}
+
+
+	//Modify family tree and diactivate parent
+	p.kid1 = gluon.index();
+	p.kid2 = fin_kid;
+	p.kid3 = rec_kid;
+	p.isActive = false;
+
+
+
+			//CHECKING
+			std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
+			for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+				it->Print(true);
+			}
+			std::cout << "=======event part / current part =======" << std::endl;
+			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+				it->Print(true);
+			}
+			//CHECKING
+
+
+        // Step 4: Handle multiple gluons (Poisson) for HQ
+        while (--nrad > 0) {
 //            double pc2_more[4] = {0.0};
 //            double pc4_more[4] = {0.0};
 //            double pb[4] = {0.0};
 //
-//            if (abs(p.pid) == 4) {
-//                radiationHQ(p.pid, qhat0, vc0, pc4, pc2_more, pc4_more, pb,
-//                            iclrad, Tdiff, Ejp, maxFncHQ, T, lim_low, lim_int);
-//            } else {
-//                radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
-//                          iclrad, Tdiff, Ejp);
-//            }
+		std::array <double, 4> pc_rad1 = {0.,0.,0.,0.};
+		std::array <double, 4> pc_rad2 = {0.,0.,0.,0.};
+		std::array <double, 4> pc_fin12 = {0.,0.,0.,0.};
+		bool successAdditional23 = radiationHQ(p, pc_rad, pc_fin, pc_rad1, pc_rad2, pc_fin12);
+                //radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
+                //          iclrad, Tdiff, Ejp);
 //
 //            if (iclrad != 1) {
 //                Particle extraGluon;
@@ -340,7 +417,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 //            } else {
 //                break;  // Stop emitting if emission fails
 //            }
-//        }
+        }
   //  }
 }
 

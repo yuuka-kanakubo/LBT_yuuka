@@ -34,6 +34,29 @@ class LBTcl{
 
 
 
+
+		int KPoisson(const double alambda){
+			//....Generate numbers according to Poisson distribution
+			//    P(lambda)=lambda**k exp(-lambda)/k!
+			//    input: average number of radiated gluons lambda
+			//    output: number of radiated gluons in this event
+
+
+			double target=exp(-alambda);
+			double p=ran0(&config.rng.NUM1);
+
+			double KKPoisson=0;
+			while(p>target)
+			{
+				p=p*ran0(&config.rng.NUM1);
+				KKPoisson++;
+			}		
+			return KKPoisson;
+		}
+
+
+
+
 		void titau(double ti,
 				const std::array<double, 4> &vf,
 				const std::array<double, 4> &vp,
@@ -955,10 +978,10 @@ class LBTcl{
 		}
 
 		bool collHQ23(const Particle &p, const double qt, 
-				std::array<double, 4> pc_med, 
-				std::array<double, 4> pc_rec, 
-				std::array<double, 4> pc_rad,
-				std::array<double, 4> pc_fin
+				const std::array<double, 4> pc_med, 
+				std::array<double, 4> &pc_rec, 
+				std::array<double, 4> &pc_rad,
+				std::array<double, 4> &pc_fin
 			     ){
 
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
@@ -966,27 +989,34 @@ class LBTcl{
 			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
 			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			//std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			//std::cout << "v_flow " <<  v_flow[0] << "  " << v_flow[1] << "  " << v_flow[2] << "  " << v_flow[3] << std::endl;
 
 
 			//Copying pc_med to pc_rec(p2: initial thermal momentum, will be final thermal momentum)
 			pc_rec = pc_med;
-			trans(v_flow, pc_jet);
+			pc_fin = pc_jet;
+			trans(v_flow, pc_fin);
 			trans(v_flow, pc_rec);
 
 			//At rest frame check if energy is too small.
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
-			double Eloc = pc_jet[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
-			double mass = sqrt(pc_jet[0]*pc_jet[0]  - pc_jet[1]*pc_jet[1]  - pc_jet[2]*pc_jet[2]  - pc_jet[3]*pc_jet[3]);
+			double Eloc = pc_fin[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
+			double mass = sqrt(pc_fin[0]*pc_fin[0]  - pc_fin[1]*pc_fin[1]  - pc_fin[2]*pc_fin[2]  - pc_fin[3]*pc_fin[3]);
 			if(Eloc<2.0*sqrt(qhat0)){
 				return false;//no radiation!
 			}
 
 			//Rotate pc_rec(med)  with pc_jet
-			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_rec, 1);
+			std::array <double, 4> zDir = {pc_fin[0], pc_fin[1], pc_fin[2], pc_fin[3]};
+			rotate(zDir[1], zDir[2], zDir[3], pc_rec, 1);
 
 
+			std::cout << __LINE__ << " --- " << std::endl;
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
+			std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			// --- Phase space limitation ---
 			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
@@ -1009,10 +1039,6 @@ class LBTcl{
 					count++;
 					if(count>1e+5) {
 						std::cout << "Give up loop at point 1 ..." << std::endl;
-						pc_rad[1]=0.0;
-						pc_rad[2]=0.0;
-						pc_rad[3]=0.0;
-						pc_rad[0]=0.0;
 						return false;
 					}
 
@@ -1041,7 +1067,7 @@ class LBTcl{
 					continue;
 				}
 
-
+				std::cout << " after sampling1 : pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
 
 				//Solve energy conservation
 				double sqx,sqy,sqzA,sq0A,sqzB,sq0B,sqz,sq0,sqtheta;
@@ -1052,14 +1078,14 @@ class LBTcl{
 				bool doneAB = false;
 
 
-				double sE1=pc_jet[0];
+				double sE1=pc_fin[0];
 				double sp1x=0.0;
 				double sp1y=0.0;
-				double sp1z=sqrt(pc_jet[1]*pc_jet[1]+pc_jet[2]*pc_jet[2]+pc_jet[3]*pc_jet[3]);
-				double sE2=pc_med[0];
-				double sp2x=pc_med[1];
-				double sp2y=pc_med[2];
-				double sp2z=pc_med[3];
+				double sp1z=sqrt(pc_fin[1]*pc_fin[1]+pc_fin[2]*pc_fin[2]+pc_fin[3]*pc_fin[3]);
+				double sE2=pc_rec[0];
+				double sp2x=pc_rec[1];
+				double sp2y=pc_rec[2];
+				double sp2z=pc_rec[3];
 				double sk0=pc_rad[0];
 				double skx=pc_rad[1];
 				double sky=pc_rad[2];
@@ -1109,6 +1135,7 @@ class LBTcl{
 						nloop2++;
 						continue;
 					} else if(doneA && doneB) {
+						std::cout << "Both solutions work!" << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << std::endl;
 						if(abs(sq0A)<abs(sq0B)) {
 							sq0=sq0A;
 							sqz=sqzA;
@@ -1128,6 +1155,13 @@ class LBTcl{
 
 				} while (!doneAB && nloop1<config.counter.loopN && nloop2<config.counter.loopN);
 
+				std::cout << "sE1 " <<  sE1 << std::endl;
+				std::cout << "sq0 " <<  sq0 << std::endl;
+				std::cout << "sk0 " <<  sk0 << std::endl;
+				std::cout << "sp1x " <<  sp1x << std::endl;
+				std::cout << "sqx " <<  sqx << std::endl;
+				std::cout << "sqy " <<  sqy << std::endl;
+				std::cout << "sqz " <<  sqz << std::endl;
 
 				if(!doneAB) {
 					nloopOut++;
@@ -1144,24 +1178,330 @@ class LBTcl{
 					pc_rec[3]=sp2z+sqz;
 
 
-					rotate(pc_jet[1],pc_jet[2],pc_jet[3],pc_jet,-1); // rotate p0 into global system
-					rotate(pc_jet[1],pc_jet[2],pc_jet[3],pc_rec,-1); // rotate p2 into global system
-					rotate(pc_jet[1],pc_jet[2],pc_jet[3],pc_fin,-1); // rotate p4 into global system                                                                                                                                                                                  transback(v0,p0);
-					transback(v_flow,pc_rec);
+					rotate(zDir[1],zDir[2],zDir[3],pc_fin,-1); // rotate p0 into global system
+					rotate(zDir[1],zDir[2],zDir[3],pc_rec,-1); // rotate p2 into global system
+					rotate(zDir[1],zDir[2],zDir[3],pc_rad,-1); // rotate p4 into global system                                                                                                                                                                                  transback(v0,p0);
 					transback(v_flow,pc_fin);
+					transback(v_flow,pc_rec);
+					transback(v_flow,pc_rad);
 
 					//TODO: debug: check on-shell condition
 
 					DONE=true;
 				}
 
-			} while(DONE && nloopOut<config.counter.loopN);
+			} while(!DONE && nloopOut<config.counter.loopN);
 
+			std::cout << "pc_rec " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			std::cout << "pc_fin " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			std::cout << "pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
 
 			if(!DONE) return false;
 			else return true;
 
 		}
+
+
+
+
+		//int parID, double qhat0ud, double v0[4], double P2[4], double P3[4], double P4[4], double Pj0[4], int &ic, double Tdiff, double HQenergy, double max_Ng, double temp_med, double xLow, double xInt
+		bool radiationHQ(const Particle &p,
+				std::array<double, 4> pc_rad0, 
+				std::array<double, 4> pc_fin0, 
+				std::array<double, 4> &pc_rad1,
+				std::array<double, 4> &pc_rad2,
+				std::array<double, 4> &pc_fin12
+			     ){
+
+			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
+			std::array<double, 4> v_flow = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+
+			//    work in the rest frame of medium
+			//    return the 4-momentum of final states in 1->3 radiation
+			//    input: P2(4)-momentum of radiated gluon from 2->3 (p_rad0 = p_rad in previous radiation)
+			//           P3(4)-momentum of daughter parton from 2->3 (p_fin0 = p_fin in previous radiation)
+			//           Pj0(4)-inital momentum of jet before 2->3 (p_jet incoming leading parton in 2->2)
+			//           v0-local velocity of medium
+			//    output:P2(4)-momentum of 1st radiated gluon (pc_rad1)
+			//           P3(4)-momentum of daughter parton (pc_fin12)
+			//           P4(4)-momentum of 2nd radiated gluon(pc_rad2)
+			//           i=1: no radiation; 0:successful radiation
+
+			std::cout << "pc_jet " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+			std::cout << "pc_fin0 " <<  pc_fin0[0] << "  " << pc_fin0[1] << "  " << pc_fin0[2] << "  " << pc_fin0[3] << std::endl;
+			std::cout << "pc_rad0 " <<  pc_rad0[0] << "  " << pc_rad0[1] << "  " << pc_rad0[2] << "  " << pc_rad0[3] << std::endl;
+
+			double mass=(p.pid==4)? sqrt(pc_fin0[0]*pc_fin0[0]
+					-pc_fin0[1]*pc_fin0[1]
+					-pc_fin0[2]*pc_fin0[2]
+					-pc_fin0[3]*pc_fin0[3]): 0.0;
+
+                        if (p.pid!=4){
+				if(fabs(pc_fin0[0]-sqrt(pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3]))>base::epsilon){
+					std::cout << "ERROR!  EE - PP != 0 :  " << pc_fin0[0]*pc_fin0[0] 
+						<< "   " <<  pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3] 
+						<< std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}
+
+
+			// transform to local comoving frame of the fluid
+			trans(v_flow,pc_rad0);
+			trans(v_flow,pc_fin0);
+			trans(v_flow,pc_jet);
+
+
+			//At rest frame check if energy is too small.
+			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
+			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+			double Eloc = pc_fin0[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
+
+
+
+			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
+			double lim_int=(pc_fin0[0]-mass)/Eloc-lim_low;
+
+			if(lim_int<=0.0) return false;
+
+			double px0=pc_rad0[1]+pc_fin0[1];
+			double py0=pc_rad0[2]+pc_fin0[2];
+			double pz0=pc_rad0[3]+pc_fin0[3];
+
+			// rotate to the frame in which jet moves along z-axis
+			rotate(px0,py0,pz0,pc_fin0,1);
+			rotate(px0,py0,pz0,pc_rad0,1);
+			rotate(px0,py0,pz0,pc_jet,1);
+
+
+			int nloopOut=0;
+			bool DONE=false;
+			//Sampling!
+			do {
+				double randomX, randomY;
+				do {
+					randomX=lim_low+lim_int*ran0(&config.rng.NUM1);
+					randomY=ran0(&config.rng.NUM1);
+				} while(tau_f(randomX,randomY,Eloc,mass)<1.0/base::pi/p.Tfrozen);   
+
+				int count=0;
+				while(p.max_Ng*ran0(&config.rng.NUM1)>dNg_over_dxdydt(p.pid,randomX,randomY,Eloc,mass,p.Tfrozen, alpha_s, p.qhat_over_T3, p.Tint_lrf)) {
+					count++;
+					if(count>1e+5) {
+						std::cout << "Give up loop at point 1 ..." << std::endl;
+						return false;
+					}
+
+					do {
+						randomX=lim_low+lim_int*ran0(&config.rng.NUM1);
+						randomY=ran0(&config.rng.NUM1);
+					} while(tau_f(randomX,randomY,Eloc,mass)<1.0/base::pi/p.Tfrozen);
+				}
+
+				if(p.pid==21&&randomX>0.5) randomX=1.0-randomX;
+				double theta_gluon=2.0*base::pi*ran0(&config.rng.NUM1);
+				double kperp_gluon=randomX*randomY*Eloc;
+				pc_rad2[1]=kperp_gluon*cos(theta_gluon);
+				pc_rad2[2]=kperp_gluon*sin(theta_gluon);
+				pc_rad2[3]=randomX*Eloc*sqrt(1.0-randomY*randomY);
+				pc_rad2[0]=sqrt(pc_rad2[1]*pc_rad2[1]+pc_rad2[2]*pc_rad2[2]+pc_rad2[3]*pc_rad2[3]);
+
+				rotate(pc_jet[1],pc_jet[2],pc_jet[3],pc_rad2,-1);
+
+				if(pc_rad2[0]>(pc_fin0[0]-mass)) {
+					// which should be impossible due to reset of lim_int above
+					std::cout << "Something is weired ... pc_rad2[0] > (pc_fin0[0]-mass) " << pc_rad2[0] << " < " << (pc_fin0[0]-mass) << std::endl;
+					exit(EXIT_FAILURE);
+				}
+
+				// solve energy-momentum conservation
+				// p0 is re-constructed off-shell parton, correponding to P5
+				// p1 is the final heavy quark from 2->3, corresponding to P3 (input). P3 (output) is the final heavy quark after 1->3.
+				// k1 is the first gluon, corresponding to P2
+				// k2 is the second gluon, corresponding to P4
+				// assume k10 and p10 unchanged and modify their other components while p0 and k2 are fixed
+
+
+				double sk1z,sk1p,sk1x,sk1y,sktheta,stheta12;
+				int nloop1=0;
+				int nloop2=0;
+				bool doneA = false;
+				bool doneB = false;
+				bool doneAB=false;
+
+				std::array <double, 4> Psum = {
+					pc_rad0[0]+pc_fin0[0],
+					pc_rad0[1]+pc_fin0[1],
+					pc_rad0[2]+pc_fin0[2],
+					pc_rad0[3]+pc_fin0[3],
+				};
+				double sp0z=sqrt(Psum[1]*Psum[1]+Psum[2]*Psum[2]+Psum[3]*Psum[3]);
+				double sk10=pc_rad0[0];
+				double sk1zOld=pc_rad0[3];
+				double sp10=pc_fin0[0];
+				double sk20=pc_rad2[0];
+				double sk2x=pc_rad2[1];
+				double sk2y=pc_rad2[2];
+				double sk2z=pc_rad2[3];
+				double sk2p=sqrt(sk2x*sk2x+sk2y*sk2y);
+
+				double sk1z1,sk1z2,sk1p1,sk1p2;
+
+				double sAA=sk10*sk10+sk2p*sk2p+sp0z*sp0z+sk2z*sk2z-2.0*sp0z*sk2z+mass*mass-(sp10-sk20)*(sp10-sk20);
+				double cos12Min2=(sAA*sAA/4.0/sk10/sk10-(sp0z-sk2z)*(sp0z-sk2z))/sk2p/sk2p;
+
+				if(cos12Min2>1.0) {
+					nloopOut++;
+					continue;
+				}
+
+				do {
+					stheta12=2.0*base::pi*ran0(&config.rng.NUM1); // theta between k1 and k2
+					double aaa=4.0*((sp0z-sk2z)*(sp0z-sk2z)+sk2p*sk2p*cos(stheta12)*cos(stheta12));
+					double bbb=-4.0*sAA*(sp0z-sk2z);
+					double ccc=sAA*sAA-4.0*sk10*sk10*sk2p*sk2p*cos(stheta12)*cos(stheta12);
+
+					double abc2=bbb*bbb-4.0*aaa*ccc;
+
+					if(abc2<0.0) {
+						nloop1++;
+						continue;
+					} else {
+						nloop1=0;
+					}
+
+					double abc=sqrt(abc2);
+					sk1z1=(-bbb+abc)/2.0/aaa;
+					sk1z2=(-bbb-abc)/2.0/aaa;
+					sk1p1=sqrt(sk10*sk10-sk1z1*sk1z1);
+					sk1p2=sqrt(sk10*sk10-sk1z2*sk1z2);
+
+					// Since we have squared both sides of the original equation during solving, the solutions may not satisfy the original equation. Double check is needed.
+
+
+					// require time-like of p1 and k10>k1z;
+					if(2.0*sk1p1*sk2p*cos(stheta12)-2.0*(sp0z-sk2z)*sk1z1+sAA<0.000001 && sk10>abs(sk1z1) && sp10*sp10-(sp0z-sk1z1)*(sp0z-sk1z1)-(sk10*sk10-sk1z1*sk1z1)>mass*mass) {
+						doneA=true; 
+					} else {
+						doneA=false;
+					}
+					if(2.0*sk1p2*sk2p*cos(stheta12)-2.0*(sp0z-sk2z)*sk1z2+sAA<0.000001 && sk10>abs(sk1z2) && sp10*sp10-(sp0z-sk1z2)*(sp0z-sk1z2)-(sk10*sk10-sk1z2*sk1z2)>mass*mass) {
+						doneB=true; 
+					} else {
+						doneB=false;
+					}
+
+					// select appropriate solution
+					if(!doneA && !doneB) {
+						//          cout << "Solutions fail ..." << endl;
+						nloop2++;
+						continue;
+					} else if(doneA && doneB) {
+						//          cout << "Both solutions work!" << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
+						if(abs(sk1z1-sk1zOld)<abs(sk1z2-sk1zOld)) {
+							sk1z=sk1z1;
+						} else {
+							sk1z=sk1z2;
+						}
+
+					} else if(doneA) {
+						//          cout << "pass A ..." << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
+						sk1z=sk1z1;
+					} else {
+						//          cout << "pass B ..." << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
+						sk1z=sk1z2;
+					}
+
+					doneAB=true;   
+
+					sk1p=sqrt(sk10*sk10-sk1z*sk1z);
+					//           cout << "check solution: " << pow(sp10-sk20,2)-pow(sk1p,2)-pow(sk2p,2)-2.0*sk1p*sk2p*cos(stheta12)-pow(sp0z-sk1z-sk2z,2)-pow(mass,2) <<"  "<< aaa*sk1z*sk1z+bbb*sk1z+ccc <<"  "<<2.0*sk1p*sk2p*cos(stheta12)-2.0*(sp0z-sk2z)*sk1z+sAA<<"  "<<2.0*sk1p*sk2p*cos(stheta12)+2.0*(sp0z-sk2z)*sk1z-sAA << endl;
+
+				} while (!doneAB && nloop1<config.counter.loopN && nloop2<config.counter.loopN);
+
+				if(!doneAB) { 
+					nloopOut++;
+					continue;
+				} else {
+					sktheta=atan2(sk2y,sk2x); // theta for k2
+					sktheta=sktheta+stheta12; // theta for k1
+					sk1p=sqrt(sk10*sk10-sk1z*sk1z);
+					sk1x=sk1p*cos(sktheta);
+					sk1y=sk1p*sin(sktheta);
+
+					pc_rad1[0]=sk10;
+					pc_rad1[1]=sk1x;
+					pc_rad1[2]=sk1y;
+					pc_rad1[3]=sk1z;
+
+					pc_fin12[0]=sp10-sk20;
+					pc_fin12[1]=-sk1x-sk2x;
+					pc_fin12[2]=-sk1y-sk2y;
+					pc_fin12[3]=sp0z-sk1z-sk2z;
+
+					// rotate back to the local coordinate
+					rotate(px0,py0,pz0,pc_rad1,-1);
+					rotate(px0,py0,pz0,pc_fin12,-1);
+					rotate(px0,py0,pz0,pc_rad2,-1);
+					rotate(px0,py0,pz0,pc_jet,-1);
+
+					// boost back to the global frame 
+					transback(v_flow,pc_rad1);
+					transback(v_flow,pc_fin12);
+					transback(v_flow,pc_rad2);
+					transback(v_flow,pc_jet);
+
+					// debug: check on-shell condition of P2, pc_fin12 and P4
+					if(abs(pc_rad1[0]*pc_rad1[0]
+								-pc_rad1[1]*pc_rad1[1]
+								-pc_rad1[2]*pc_rad1[2]
+								-pc_rad1[3]*pc_rad1[3]) >0.000001 || 
+							abs(pc_fin12[0]*pc_fin12[0]
+								-pc_fin12[1]*pc_fin12[1]
+								-pc_fin12[2]*pc_fin12[2]
+								-pc_fin12[3]*pc_fin12[3]
+								-mass*mass)>0.000001 
+							|| abs(pc_rad2[0]*pc_rad2[0]
+								-pc_rad2[1]*pc_rad2[1]
+								-pc_rad2[2]*pc_rad2[2]
+								-pc_rad2[3]*pc_rad2[3])>0.000001) {
+						std::cout << "Wrong solution -- not on shell" << "  " << sk10 << "  " << sk1x << "  " << sk1y << "  " << sk1z << "  " << sk20 << "  " << sk2x << "  " << sk2y << "  " << sk2z << "  " << stheta12 << "  " << sp10 << "  " << sp10-sk20 << "  " << -sk1x-sk2x << "  " << -sk1y-sk2y << "  " << sp0z << "  " << sp0z-sk1z-sk2z << "  " <<mass<< "  "<<pow(sp10-sk20,2)-pow(sk1x+sk2x,2)-pow(sk1y+sk2y,2)-pow(sp0z-sk1z-sk2z,2)-pow(mass,2)<<std::endl;
+						std::cout << abs(pc_rad1[0]*pc_rad1[0]-pc_rad1[1]*pc_rad1[1]-pc_rad1[2]*pc_rad1[2]-pc_rad1[3]*pc_rad1[3]) <<"  "<< abs(pc_fin12[0]*pc_fin12[0]-pc_fin12[1]*pc_fin12[1]-pc_fin12[2]*pc_fin12[2]-pc_fin12[3]*pc_fin12[3]-mass*mass) <<"  "<< abs(pc_rad2[0]*pc_rad2[0]-pc_rad2[1]*pc_rad2[1]-pc_rad2[2]*pc_rad2[2]-pc_rad2[3]*pc_rad2[3]) <<std::endl;
+					}
+
+					DONE=true;
+
+					// SC: check energy-momentum conservation
+					for(int i=0; i<=3; i++) {
+						if(0 && abs(pc_rad1[i]+pc_fin12[i]-pc_rad1[i]-pc_fin12[i]-pc_rad2[i])>0.000001) {
+							std::cout << "Warning: Violation of E.M. conservation!  " << i << " " << abs(pc_rad1[i]+pc_fin12[i]-pc_rad1[i]-pc_fin12[i]-pc_rad2[i]) << std::endl;
+						}
+					}
+
+					// SC: check on-shell condition
+					double shell2=abs(pc_rad1[0]*pc_rad1[0]-pc_rad1[1]*pc_rad1[1]-pc_rad1[2]*pc_rad1[2]-pc_rad1[3]*pc_rad1[3]);
+					double shell3=abs(pc_fin12[0]*pc_fin12[0]-pc_fin12[1]*pc_fin12[1]-pc_fin12[2]*pc_fin12[2]-pc_fin12[3]*pc_fin12[3]-mass*mass);
+					double shell4=abs(pc_rad2[0]*pc_rad2[0]-pc_rad2[1]*pc_rad2[1]-pc_rad2[2]*pc_rad2[2]-pc_rad2[3]*pc_rad2[3]);
+					if(shell2>0.000001 || shell3>0.000001 || shell4>0.000001) {
+						std::cout << "Warning: Violation of on-shell: " << shell2 << "  " << shell3 << "  " << shell4 << std::endl;
+					}
+
+				}
+
+			} while(!DONE && nloopOut<config.counter.loopN);
+
+			if(!DONE) return false;
+			else return true;
+
+		}
+
+
+
+
+
+
+
+
 
 
 

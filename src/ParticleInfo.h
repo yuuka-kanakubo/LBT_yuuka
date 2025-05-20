@@ -53,6 +53,7 @@ struct Particle {
         int parent2 = -1;  // Index of secondary (e.g. recoil) parent parton
         int kid1 = -1;  // Index of kid parton
         int kid2 = -1;  // Index of secondary (e.g. recoil) kid parton
+        int kid3 = -1;  
 	double timedilation = 0.0;//time dilation factor between lab frame and fluid rest frame.
 	double qhat_over_T3 = 0.0;
 	double D2piT = 0.0;//dimention-less diffusion factor

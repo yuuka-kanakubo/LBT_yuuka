@@ -42,7 +42,7 @@ HQener_gn 500
 124.4    413900
 126.9    414200
 572.8    6.01e+08
-Program starts at: Fri May 16 17:32:32 2025
+Program starts at: Tue May 20 12:24:51 2025
 The end of initialize () 
 /home/yuuka/lbt_updating/LBT_sc/src/main_functions.cpp(371)After reading
 np 5
@@ -439,7 +439,7 @@ nHQgluon!
 probRad 0.02745591
 probCol 0.09101620
 --- throw dice!---  0.10588808
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(654)Calling handleElasticCollision. 
 RTEg1 0.15967272
 RTEg2 0.00089444
 RTEg3 0.11725709
@@ -461,7 +461,7 @@ pc_jet(p4) 13.30259126  -2.79833000  -1.68049000  12.89590000
 pc_med(p3) 0.46565019  0.36956250  0.23887069  -0.15229727
 pc_rec(p2) 1.83960753  -0.15880507  1.24471860  1.34521835
 pc_fin(p0) 11.92863393  -2.26996243  -2.68633792  11.39838438
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(659)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -622,7 +622,7 @@ CHEK NEGATIVE PARTON PROPAGATION ========
 Vfrozen       1.20000000    -0.05274845    -0.02804010     0.45200746
 vcfrozen       0.00000000    -0.00197334    -0.00029691     0.37667289
 Missing partner FOUND --> 5
-473 pc0[0]<Ecmcut 1.37152000<2.00000000
+544 pc0[0]<Ecmcut 1.37152000<2.00000000
 ===============  i 7
 .......             CAT     3
 .......             index 5
@@ -663,7 +663,7 @@ nHQgluon!
 probRad 0.03963300
 probCol 0.05511269
 --- throw dice!---  0.06238642
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(654)Calling handleElasticCollision. 
 RTEg1 0.16524546
 RTEg2 0.00058254
 RTEg3 0.11990219
@@ -685,7 +685,7 @@ pc_jet(p4) 27.80125223  2.30698000  -20.67470000  -18.44300000
 pc_med(p3) 0.36421329  -0.15919402  0.05525757  0.32288572
 pc_rec(p2) 26.20201957  0.78496107  -20.08092043  -16.81327750
 pc_fin(p0) 1.96344596  1.36282491  -0.53852201  -1.30683678
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(659)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -804,7 +804,7 @@ CHEK NEGATIVE PARTON PROPAGATION ========
 Vfrozen       1.30000000     0.02661639     0.02325822     0.41930110
 vcfrozen       0.00000000     0.00009483     0.00097314     0.32253930
 Missing partner FOUND --> 5
-473 pc0[0]<Ecmcut 1.35545081<2.00000000
+544 pc0[0]<Ecmcut 1.35545081<2.00000000
 ===============  i 8
 .......             CAT     3
 .......             index 5
@@ -869,7 +869,7 @@ nHQgluon!
 probRad 0.04711707
 probCol 0.09721345
 --- throw dice!---  0.14052379
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(583)Calling handleElasticCollision. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(654)Calling handleElasticCollision. 
 RTEg1 0.14309187
 RTEg2 0.00082673
 RTEg3 0.10509501
@@ -891,7 +891,7 @@ pc_jet(p4) 11.92863393  -2.26996243  -2.68633792  11.39838438
 pc_med(p3) 1.87259200  1.05000385  0.57331974  1.44062390
 pc_rec(p2) 4.26759399  1.05764897  0.80873101  4.05458891
 pc_fin(p0) 9.53363195  -2.27760755  -2.92174918  8.78441937
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(588)After handleElastic
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(659)After handleElastic
 ----
 [ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
  P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
@@ -964,9 +964,105 @@ Vfrozen       1.94789796    -0.18920186    -0.14689865     0.77137829
 vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
 --- throw dice for radiation??---  qt 0.97470467
 --- throw dice for radiation!---  0.28444088
-/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(603)Calling handleRadiation. 
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(674)Calling handleRadiation. 
 FOUND partner! -->  11
+FOUND kid(rec)! -->  12
+FOUND kid(fin)! -->  13
 pc_jet(p4) 11.92863393  -2.26996243  -2.68633792  11.39838438
 pc_med(p2) 1.87259200  1.05000385  0.57331974  1.44062390
+1015 --- 
+pc_jet(p4) 11.92863393  -2.26996243  -2.68633792  11.39838438
+pc_med(p2) 1.87259200  1.05000385  0.57331974  1.44062390
+pc_rec(p3) 1.29518633  -1.20838996  0.43787375  -0.15989970
+pc_fin(p0) 6.76267877  -2.25184983  -2.68361267  5.78456736
+ after sampling1 : pc_rad 2.83876766  1.10863038  0.21753562  2.60426934
+Both solutions work!  6.76267877  0.00000000  0.00000000  6.76267877  1.29518633  -1.20838996  0.43787375  -0.15989970  2.83876766  1.10863038  0.21753562  2.60426934  -0.84848003  0.47971954  3.16497737  4.00962290  1.55996329  1.91466117
+sE1 6.76267877
+sq0 1.55996329
+sk0 2.83876766
+sp1x 0.00000000
+sqx -0.84848003
+sqy 0.47971954
+sqz 1.91466117
+pc_rec 5.11315563  1.24180288  0.06043263  4.95970100
+pc_fin 4.19137701  -1.14456862  -0.27268257  4.02284081
+pc_rad 4.49669329  -1.31719285  -1.90076823  3.85646648
+/home/yuuka/lbt_updating/LBT_sc/src/LBTcl.cpp(373)After handleElastic
+----
+[ index       0],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
+ P      68.87723696   -30.10980000    58.33550000   -20.84330000     0.00000000
+ V      -0.19409338    -0.34972135     0.67755912    -0.24209217
+Vfrozen       1.40000000    -0.34972135     0.67755912    -0.24209217
+vcfrozen       0.00000000    -0.00743897     0.00419578    -0.17292298
+----
+[ index      10],  [parent1 / parent2       1/     8],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
+ P      26.20201957     0.78496107   -20.08092043   -16.81327750     0.00000000
+ V       0.41430690     0.06108261    -0.59720135    -0.52853904
+Vfrozen       1.40000000     0.06108261    -0.59720135    -0.52853904
+vcfrozen       0.00000000     0.00073674    -0.00257987    -0.37752788
+------------------ this particle is not actuve: index 1
+----
+[ index       2],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
+ P       9.99261796     4.11751000     0.60469900    -9.08476000     0.00000000
+ V       0.64587097     3.19232681     0.46882626     0.00000000
+Vfrozen       7.74733000     3.19232681     0.46882626     0.00000000
+vcfrozen       0.00000000     0.00000000     0.00000000     0.00000000
+------------------ this particle is not actuve: index 7
+------------------ this particle is not actuve: index 3
+----
+[ index       4],  [parent1 / parent2      -1/    -1],  [kid1 / kid2      -1/    -1],  [pid       2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
+ P      20.84188531     4.52824000    -1.74204000   -20.26930000     0.00000000
+ V      -0.03087643     0.24094634    -0.09269344    -0.68076903
+Vfrozen       1.30000000     0.24094634    -0.09269344    -0.68076903
+vcfrozen       0.00000000     0.00031512    -0.00052337    -0.52366848
+----
+[ index       6],  [parent1 / parent2       3/     5],  [kid1 / kid2      -1/    -1],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     2] [isActive / isPrimary      1/     0]
+ P       1.83960753    -0.15880507     1.24471860     1.34521835     0.00000000
+ V       1.75716897    -0.14937838     0.05598596     0.63096441
+Vfrozen       1.30000000    -0.14937838     0.05598596     0.63096441
+vcfrozen       0.00000000    -0.00197643     0.00103945     0.48535724
+----
+[ index       5],  [parent1 / parent2      -1/    -1],  [kid1 / kid2       6/     7],  [pid      -1]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     3] [isActive / isPrimary      1/     0]
+ P       0.46565019     0.36956250     0.23887069    -0.15229727     0.00000000
+ V       0.86105171     0.02661639     0.02325822     0.41930110
+Vfrozen       1.30000000     0.02661639     0.02325822     0.41930110
+vcfrozen       0.00000000     0.00009483     0.00097314     0.32253930
+----
+[ index       9],  [parent1 / parent2       1/     8],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     2] [isActive / isPrimary      1/     0]
+ P       1.96344596     1.36282491    -0.53852201    -1.30683678     0.00000000
+ V       1.01775883     0.05808681    -0.52056252    -0.46437117
+Vfrozen      -0.63423482     0.05808681    -0.52056252    -0.46437117
+vcfrozen       0.00000000     0.00074313    -0.00260223    -0.35720859
+----
+[ index       8],  [parent1 / parent2      -1/    -1],  [kid1 / kid2       9/    10],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     3] [isActive / isPrimary      1/     0]
+ P       0.36421329    -0.15919402     0.05525757     0.32288572     0.00000000
+ V       2.60048873     0.05808681    -0.52056252    -0.46437117
+Vfrozen      -0.63423482     0.05808681    -0.52056252    -0.46437117
+vcfrozen       0.00000000     0.00074313    -0.00260223    -0.35720859
+=======event part / current part =======
+----
+[ index      13],  [parent1 / parent2       7/    11],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     0] [isActive / isPrimary      1/     1]
+ P       4.19137701    -1.14456862    -0.27268257     4.02284081     0.00000000
+ V       1.94789796    -0.18920186    -0.14689865     0.77137829
+Vfrozen       1.40000000    -0.18920186    -0.14689865     0.77137829
+vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
+----
+[ index      12],  [parent1 / parent2       7/    11],  [kid1 / kid2      -1/    -1],  [pid      -2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     2] [isActive / isPrimary      1/     0]
+ P       5.11315563     1.24180288     0.06043263     4.95970100     0.00000000
+ V       1.94789796    -0.18920186    -0.14689865     0.77137829
+Vfrozen       1.94789796    -0.18920186    -0.14689865     0.77137829
+vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
+----
+[ index      11],  [parent1 / parent2       3/     5],  [kid1 / kid2      12/    13],  [pid      -2]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     3] [isActive / isPrimary      1/     0]
+ P       1.87259200     1.05000385     0.57331974     1.44062390     0.00000000
+ V       1.94789796    -0.18920186    -0.14689865     0.77137829
+Vfrozen       1.94789796    -0.18920186    -0.14689865     0.77137829
+vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
+----
+[ index      14],  [parent1 / parent2       7/    11],  [kid1 / kid2      -1/    -1],  [pid      21]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated     4] [isActive / isPrimary      1/     0]
+ P       4.49669329    -1.31719285    -1.90076823     3.85646648     0.00000000
+ V       1.24007653    -0.18920186    -0.14689865     0.77137829
+Vfrozen       1.94789796    -0.18920186    -0.14689865     0.77137829
+vcfrozen       0.00000000    -0.00177771    -0.00026748     0.55098449
  EOF reached in CCNU-hydro file
- M p_med = it;ax tau in the hydro file:    12.899999999999999     
+ Max tau in the hydro file:    12.899999999999999     
