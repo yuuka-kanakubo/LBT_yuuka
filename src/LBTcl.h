@@ -31,6 +31,7 @@ class LBTcl{
 				double T,
 				double fraction
 				);
+		void CheckParticleWithSmallEnegy(Particle &p, std::vector<Particle> & part_current);
 
 
 
@@ -1230,6 +1231,7 @@ class LBTcl{
 			std::cout << "pc_jet " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 			std::cout << "pc_fin0 " <<  pc_fin0[0] << "  " << pc_fin0[1] << "  " << pc_fin0[2] << "  " << pc_fin0[3] << std::endl;
 			std::cout << "pc_rad0 " <<  pc_rad0[0] << "  " << pc_rad0[1] << "  " << pc_rad0[2] << "  " << pc_rad0[3] << std::endl;
+exit(1);
 
 			double mass=(p.pid==4)? sqrt(pc_fin0[0]*pc_fin0[0]
 					-pc_fin0[1]*pc_fin0[1]

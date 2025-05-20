@@ -302,6 +302,21 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 	}
 
 
+
+	//CHECKING
+	std::cout << __FILE__ << "(" << __LINE__ << ")" << "Before collHQ23" << std::endl;
+	for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+		it->Print(true);
+	}
+	std::cout << "=======event part / current part =======" << std::endl;
+	for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+		it->Print(true);
+	}
+	//CHECKING
+
+
+
+
 	// Step 2: Call radiation kernel
 	//returns pc_rec, pc_rad, pc_fin
 	bool success23 = collHQ23(p, qt, pc_med, pc_rec, pc_rad, pc_fin);
@@ -370,7 +385,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 
 
 			//CHECKING
-			std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
+			std::cout << __FILE__ << "(" << __LINE__ << ")" << "After collHQ23" << std::endl;
 			for (auto it = part_event.begin(); it != part_event.end(); ++it) {
 				it->Print(true);
 			}
@@ -378,6 +393,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
 				it->Print(true);
 			}
+			exit(1);
 			//CHECKING
 
 
@@ -394,31 +410,60 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
                 //radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
                 //          iclrad, Tdiff, Ejp);
 //
-//            if (iclrad != 1) {
-//                Particle extraGluon;
-//                for (int j = 0; j < 4; ++j) {
-//                    extraGluon.P[j] = pc4_more[j];
-//                    extraGluon.V[j] = p.V[j];
-//                }
-//                extraGluon.pid = 21;
-//                extraGluon.CAT = 4;
-//                extraGluon.Tfrozen = T;
-//                extraGluon.vcfrozen[1] = p.vcfrozen[1];
-//                extraGluon.vcfrozen[2] = p.vcfrozen[2];
-//                extraGluon.vcfrozen[3] = p.vcfrozen[3];
-//                extraGluon.WT = p.WT;
-//                extraGluon.mass = 0.0;
-//                extraGluon.isPrimary = false;
-//                extraGluon.isActive = true;
-//                extraGluon.mom1 = parentIndex;
-//                extraGluon.mom2 = parentIndex;
-//                extraGluon.index = particles.size();
-//                particles.push_back(extraGluon);
-//            } else {
-//                break;  // Stop emitting if emission fails
-//            }
-        }
-  //  }
+            if (successAdditional23) {
+
+
+		    //Overwrite pc_rad with pc_rad 1
+		    Particle& Gluon_prev = part_current.back();
+		    for (int j = 0; j < 4; ++j) {
+			    Gluon_prev.P[j] = pc_rad1[j];
+		    }
+                    
+
+		    //Add one extra gluon! (pc_rad2)
+		    Particle extraGluon;
+		    extraGluon.assign_index();
+		    for (int j = 0; j < 4; ++j) {
+			    extraGluon.P[j] = pc_rad2[j];
+			    extraGluon.V[j] = p.V[j];
+		    }
+		    extraGluon.pid = 21;
+		    extraGluon.CAT = 4;
+		    extraGluon.Tfrozen = p.Tfrozen;
+		    extraGluon.vcfrozen[1] = p.vcfrozen[1];
+		    extraGluon.vcfrozen[2] = p.vcfrozen[2];
+		    extraGluon.vcfrozen[3] = p.vcfrozen[3];
+		    extraGluon.WT = p.WT;
+		    extraGluon.mass = 0.0;
+		    extraGluon.isPrimary = false;
+		    extraGluon.isActive = true;
+		    extraGluon.parent1 = p.index();
+		    extraGluon.parent2 = partner;
+
+		    part_current.push_back(extraGluon);
+
+
+		    //Overwrite pc_fin with pc_fin12
+		    if (p_fin_ptr) {
+			    Particle& p_fin = *p_fin_ptr;  // Create a reference when needed
+			    for (int j = 0; j < 4; ++j) {
+				    p_fin.P[j] = pc_fin12[j];
+			    }
+		    }else{
+			    std::cout << __LINE__ << " ERROR: p_fin_ptr = nullptr. " << std::endl;
+		    }
+
+
+
+	p.kid1 = gluon.index();
+	p.kid2 = fin_kid;
+	p.kid3 = rec_kid;
+
+
+
+	    } else break;  // Stop emitting if emission fails
+
+        }//while
 }
 
 
@@ -548,6 +593,20 @@ bool LBTcl::belowCutOff(const double Eloc, const Particle &p){
 }
 
 
+void LBTcl::CheckParticleWithSmallEnegy(Particle &p, std::vector<Particle> & part_current){
+
+	if(p.P[0]<config.physics.Ecut) p.CAT = 1;
+
+
+	for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+		if(it->P[0]<config.physics.Ecut){
+			it->CAT = 1;
+		}
+	}
+	return;
+}
+
+
 
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
@@ -673,10 +732,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 			if (throwdice_rad < probRad / probTot) {
 				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
 				handleRadiation(p, qt, part_event, part_current);
-				exit(1);
 			}
 
 			//Set V[0] (=t) for newly created particles.
+			//Better to do it when particles are created.
 			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
                                     it->V[0]=-log(1.0-ran0(&config.rng.NUM1));
 			}
@@ -686,6 +745,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				std::cout << "ERROR n_newparticle = " << n_newparticle << std::endl;
 				exit(EXIT_FAILURE);
 			}
+
+
+			CheckParticleWithSmallEnegy(p, part_current);
+
 			part_event.insert(part_event.begin() + p.index(),  part_current.begin(), part_current.begin() + n_newparticle);
 			part_event.insert(part_event.end(), part_current.begin() + n_newparticle, part_current.end());
 			std::vector<Particle>().swap(part_current);
