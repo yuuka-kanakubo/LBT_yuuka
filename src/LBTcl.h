@@ -905,14 +905,20 @@ class LBTcl{
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 			std::array<double, 4> pc_rec = {0., 0., 0., 0.};
 			std::array<double, 4> pc_med = {0., 0., 0., 0.};
-			//std::array<double, 4> pc_init = {0.,0.,0.,0.};// output: original jet momentum before scattering
+			std::array<double, 4> pc_fin = {0.,0.,0.,0.};
 
 			// Transform heavy quark to fluid rest frame
 			trans(v_fluid, pc_jet);
+			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
-			// Save original momentum
-			//std::copy(pc_jet, pc_jet + 4, pc_init);
 
+			//Keep info
+			pc_fin = pc_jet;
+			double mass2 = pc_jet[0]*pc_jet[0] 
+				- pc_jet[1]*pc_jet[1] 
+				- pc_jet[2]*pc_jet[2] 
+				- pc_jet[3]*pc_jet[3];
+			double mass = (mass2 > 1e-12) ? std::sqrt(mass2) : 0.0;
 
 			double maxWeight, e2;
 			bool sampleOK = sampleThermalParton(channel, pc_jet, p.Tfrozen, maxWeight, e2);
@@ -953,29 +959,39 @@ class LBTcl{
 			pc_rec[3] = e4 * std::cos(theta4);
 
 			// Back-rotate from jet axis
-			//rotate(pc_init[1], pc_init[2], pc_init[3], pc_rec, -1);
-			//rotate(pc_init[1], pc_init[2], pc_init[3], pc_med, -1);
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_rec, -1);
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_med, -1);
 
 			// Update HQ momentum via conservation
-			//for (int j = 1; j <= 3; ++j)
-			//	pc_jet[j] = pc_init[j] + pc_med[j] - pc_rec[j];
-			//pc_jet[0] = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3] + HQmass*HQmass);
+			for (int j = 1; j <= 3; ++j)
+				pc_fin[j] = pc_jet[j] + pc_med[j] - pc_rec[j];
+			pc_fin[0] = std::sqrt(pc_fin[1]*pc_fin[1] 
+					+ pc_fin[2]*pc_fin[2] 
+					+ pc_fin[3]*pc_fin[3] 
+					+ mass*mass);
 
 			// Transverse momentum transfer
-			//rotate(pc_init[1], pc_init[2], pc_init[3], pc_jet, 1);
-			qt = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2]);
-			//rotate(pc_init[1], pc_init[2], pc_init[3], pc_jet, -1);
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, 1);
+			qt = std::sqrt(pc_fin[1]*pc_fin[1] + pc_fin[2]*pc_fin[2]);
+			rotate(pc_jet[1], pc_jet[2], pc_jet[3], pc_fin, -1);
 
 			// Back-transform all to lab frame
 			transback(v_fluid, pc_rec);
 			transback(v_fluid, pc_med);
 			transback(v_fluid, pc_jet);
-			//transback(v0, pc_init);
+			transback(v_fluid, pc_fin);
 
 			for(int i=0; i<4; i++){
 				p_rec.V[i] = pc_rec[i];
 				p_med.V[i] = pc_med[i];
 			}
+
+
+			std::cout << "pc_med(p3) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
+			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+
+exit(1);
 		}
 
 		bool collHQ23(const Particle &p, const double qt, 
@@ -1003,7 +1019,12 @@ class LBTcl{
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 			double Eloc = pc_fin[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
-			double mass = sqrt(pc_fin[0]*pc_fin[0]  - pc_fin[1]*pc_fin[1]  - pc_fin[2]*pc_fin[2]  - pc_fin[3]*pc_fin[3]);
+			double mass2 = pc_fin[0]*pc_fin[0]  
+				- pc_fin[1]*pc_fin[1]  
+				- pc_fin[2]*pc_fin[2]  
+				- pc_fin[3]*pc_fin[3];
+			double mass = (mass2>1e-12)? 
+				sqrt(mass2):0.0;
 			if(Eloc<2.0*sqrt(qhat0)){
 				return false;//no radiation!
 			}
@@ -1013,7 +1034,7 @@ class LBTcl{
 			rotate(zDir[1], zDir[2], zDir[3], pc_rec, 1);
 
 
-			std::cout << __LINE__ << " --- " << std::endl;
+			std::cout << __LINE__ << " --- after rotatio check pc_rec " << std::endl;
 			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
 			std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
@@ -1023,6 +1044,9 @@ class LBTcl{
 			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
 			double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
 			double lim_int = lim_high - lim_low;
+std::cout << "xLow:  " << lim_low << std::endl;
+std::cout << "Eloc :  " << Eloc << std::endl;
+std::cout << "mass:  " << mass << std::endl;
 
 			int nloopOut=0;
 			bool DONE = false;
@@ -1059,6 +1083,11 @@ class LBTcl{
 				pc_rad[0]=sqrt(pc_rad[1]*pc_rad[1]+pc_rad[2]*pc_rad[2]+pc_rad[3]*pc_rad[3]);
 
 
+				std::cout << " after sampling1 : pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
+std::cout << "kperp_gluon " << kperp_gluon << std::endl;
+std::cout << "theta_gluon " << theta_gluon << std::endl;
+std::cout << "randomX " << randomX << std::endl;
+std::cout << "randomY " << randomY << std::endl;
 				if(pc_rad[0]>(Eloc-mass)) {
 					pc_rad[1]=0.0;
 					pc_rad[2]=0.0;
@@ -1068,7 +1097,6 @@ class LBTcl{
 					continue;
 				}
 
-				std::cout << " after sampling1 : pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
 
 				//Solve energy conservation
 				double sqx,sqy,sqzA,sq0A,sqzB,sq0B,sqz,sq0,sqtheta;
@@ -1233,10 +1261,11 @@ class LBTcl{
 			std::cout << "pc_rad0 " <<  pc_rad0[0] << "  " << pc_rad0[1] << "  " << pc_rad0[2] << "  " << pc_rad0[3] << std::endl;
 exit(1);
 
-			double mass=(p.pid==4)? sqrt(pc_fin0[0]*pc_fin0[0]
+			double mass2=(pc_fin0[0]*pc_fin0[0]
 					-pc_fin0[1]*pc_fin0[1]
 					-pc_fin0[2]*pc_fin0[2]
-					-pc_fin0[3]*pc_fin0[3]): 0.0;
+					-pc_fin0[3]*pc_fin0[3]);
+			double mass=(p.pid==4 && mass2>1e-12)? sqrt(mass2): 0.0;
 
                         if (p.pid!=4){
 				if(fabs(pc_fin0[0]-sqrt(pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3]))>base::epsilon){

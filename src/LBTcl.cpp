@@ -154,6 +154,7 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
     std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
     std::array<double, 4> pc_fin = {0.,0.,0.,0.};
     if (channel == 11 || channel == 12) {
+            std::cout << "WARNING: collHQ22 is called. " << std::endl;
 	    collHQ22(channel, p, p_rec, p_med, p_fin, qt);
             std::cout << "ERROR: refactoring is not completed yet. " << std::endl;
 	    exit(EXIT_FAILURE);
@@ -325,6 +326,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 
 	//Step 2.5: Additinal radiation or not?
        int nrad = KPoisson(p.radng);
+std::cout << "nrad " << nrad << std::endl;
 
 
 
@@ -393,7 +395,6 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
 				it->Print(true);
 			}
-			exit(1);
 			//CHECKING
 
 
@@ -402,6 +403,7 @@ void LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> 
 //            double pc2_more[4] = {0.0};
 //            double pc4_more[4] = {0.0};
 //            double pb[4] = {0.0};
+			exit(1);
 //
 		std::array <double, 4> pc_rad1 = {0.,0.,0.,0.};
 		std::array <double, 4> pc_rad2 = {0.,0.,0.,0.};
@@ -631,6 +633,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 	std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
 	std::cout << ".......             P     " << p.P[0] << std::endl;
+	std::cout << ".......             V     " << p.V[0] << std::endl;
 	std::cout << ".......             index " << p.index() << std::endl;
 
         int free = 0;
@@ -734,10 +737,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				handleRadiation(p, qt, part_event, part_current);
 			}
 
-			//Set V[0] (=t) for newly created particles.
-			//Better to do it when particles are created.
+			//Set V[0] (=t) for newly created particles and the current particle.
 			for (auto it = part_current.begin(); it != part_current.end(); ++it) {
                                     it->V[0]=-log(1.0-ran0(&config.rng.NUM1));
+				    std::cout << "V0 reset! (ip loop)" << std::endl;
 			}
 
 
