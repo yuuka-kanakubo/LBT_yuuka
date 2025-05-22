@@ -78,7 +78,7 @@ struct Particle {
 
 	void Print(const bool printonlyActive){
 		if(printonlyActive==true && this->isActive==false) {
-		std::cout << "------------------ this particle is not actuve: index " << this->index_ << std::endl;
+		//std::cout << "------------------ this particle is not actuve: index " << this->index_ << std::endl;
 			return;
 		}
 		std::cout << "----" << std::endl;

@@ -159,7 +159,6 @@ class LBTcl{
 				RTE=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;
 			}
 
-			std::cout << "RTE: " << RTE << std::endl;
 			return;
 		}
 
@@ -172,7 +171,6 @@ class LBTcl{
 		double nHQgluon(Particle &p, const double dtLRF,
 				const double temp_med_,const double HQenergy_){
 			// gluon radiation probability for heavy quark       
-			std::cout << "nHQgluon! -- Tint_lrf" << p.Tint_lrf << std::endl;
 			int flavour = p.pid;
 			double time_gluon = p.Tint_lrf;
 			double temp_med = temp_med_;
@@ -210,9 +208,6 @@ class LBTcl{
 			if(HQenergy_num >= config.hqrad.HQener_gn) HQenergy_num=config.hqrad.HQener_gn-1; // automatically become extrapolation
 			if(temp_num >= config.hqrad.temp_gn) temp_num=config.hqrad.temp_gn-1;
 
-			std::cout << time_num << std::endl;
-			std::cout << temp_num << std::endl;
-			std::cout << HQenergy_num << std::endl;
 
 
 			double rate_T1E1,rate_T1E2,rate_T2E1,rate_T2E2,max_T1E1,max_T1E2,max_T2E1,max_T2E2;
@@ -255,20 +250,12 @@ class LBTcl{
 			double max_Ng = max_EGrid_low+(HQenergy-HQenergy_num*config.hqrad.delta_HQener)/config.hqrad.delta_HQener*(max_EGrid_high-max_EGrid_low);
 
 
-			std::cout << " D2piT " << p.D2piT << std::endl;
-			std::cout << " dtLRF " << dtLRF << std::endl;
-			std::cout << " Tint_lrf " << time_gluon << std::endl;
-			std::cout << " rate_T2E1 " << rate_T2E1 << std::endl;
-
 
 			delta_Ng*=6.0/p.D2piT*dtLRF;
 			max_Ng*=6.0/p.D2piT;
 			p.max_Ng = max_Ng;
 			p.Tint_lrf = time_gluon;
 
-			//  if(delta_Ng>1) {
-			//     std::cout << "Warning: Ng greater than 1   " << time_gluon << "  " << delta_Ng << std::endl;
-			//  }
 
 			return delta_Ng;
 
@@ -350,10 +337,6 @@ class LBTcl{
 			double a = ran0(&config.rng.NUM1);
 			int b = 0;
 
-			std::cout << "RTEg1 " << RTEg1 << std::endl;
-			std::cout << "RTEg2 " << RTEg2 << std::endl;
-			std::cout << "RTEg3 " << RTEg3 << std::endl;
-			std::cout << "a " << a << std::endl;
 
 			if (initialPid == 21) {
 				double R0 = RTE;
@@ -570,10 +553,6 @@ class LBTcl{
 					(ss * ss + (ss - tmax) * (ss - tmax)) / (tmax * tmax)
 					+ (4.0 / 9.0) * (ss * ss + (ss - tmax) * (ss - tmax)) / (ss * (ss - tmax))
 					);
-			//std::cout << "tmin " << tmin << std::endl;
-			//std::cout << "tmax " << tmax << std::endl;
-			//std::cout << "mmax_a " << mmax_a << std::endl;
-			//std::cout << "mmax_b " << mmax_b << std::endl;
 			double mmax = std::max(mmax_a, mmax_b);
 
 			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
@@ -720,16 +699,11 @@ class LBTcl{
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 			double qhat0ud = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
-			std::cout << "Kalphas " << config.physics.Kalphas << std::endl;
-			std::cout << "alpha_s " << alpha_s << std::endl;
-			std::cout << "p.Tfrozen " << p.Tfrozen << std::endl;
 
 			trans(v_fluid, pc_jet);
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			double t;
 			for (int nloop = 0; nloop < 1e6; ++nloop) {
@@ -779,24 +753,11 @@ class LBTcl{
 				double u = s - t;
 
 				// Matrix element
-				//std::cout << " s " << s << std::endl;
-				//std::cout << " t " << t << std::endl;
-				//std::cout << " u " << u << std::endl;
-				//std::cout << " pc_jet[0] " << pc_jet[0] << std::endl;
-				//std::cout << " pc_med[0] " << pc_med[0] << std::endl;
 				double msq = computeMatrixElement(channel, s, t, u, tmin, tmax, pc_jet[0], pc_med[0]);
 				double ff = getFinalStateStatFactor(channel, f1, f2);
-				//std::cout << " channel " << channel << std::endl;
-				//std::cout << " msq " << msq << std::endl;
-				//std::cout << " f1 " << f1 << std::endl;
-				//std::cout << " f2 " << f2 << std::endl;
-				//std::cout << " ff " << ff << std::endl;
 
 				double accept = msq * ff;
 				if (ran0(&config.rng.NUM1) <= accept) {
-					//	std::cout << "accepted! " << std::endl;
-					//	std::cout << "u " <<u << std::endl;
-					//	std::cout << "t " <<t << std::endl;
 					break;
 				}
 
@@ -809,12 +770,10 @@ class LBTcl{
 			std::array <double, 4> v_cm =  get_centerofmass(pc_jet, pc_rec);
 			trans(v_cm, pc_jet);
 			trans(v_cm, pc_rec);
-			std::cout << "Before pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			//Copy initial info
 			pc_fin = pc_jet;
 			LongitudinalMomentumTransfer(t, pc_jet, pc_rec, pc_fin);
-			std::cout << "After pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			transback(v_cm, pc_jet);
 			transback(v_cm, pc_rec);
@@ -832,10 +791,8 @@ class LBTcl{
 			transback(v_fluid, pc_med);
 			transback(v_fluid, pc_fin);
 			transback(v_fluid, pc_jet);
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			std::cout << "pc_med(p3) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			//std::cout << "pc_rec " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			//std::cout << "pc_med " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
 
 
 
@@ -856,8 +813,6 @@ class LBTcl{
 
 			double q_L=t/2.0/pcm;
 
-			std::cout << "q_L " << q_L << std::endl; 
-			std::cout << "q_T " << q_T << std::endl; 
 			// Compute velocity components of particle 2 in the lab frame
 			const double E2 = pc_rec[0];
 			const double px2 = pc_rec[1];
@@ -911,7 +866,6 @@ class LBTcl{
 
 			// Transform heavy quark to fluid rest frame
 			trans(v_fluid, pc_jet);
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 
 			//Keep info
@@ -1005,10 +959,6 @@ exit(1);
 
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_flow = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-			//std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			//std::cout << "v_flow " <<  v_flow[0] << "  " << v_flow[1] << "  " << v_flow[2] << "  " << v_flow[3] << std::endl;
 
 
 			//Copying pc_med to pc_rec(p2: initial thermal momentum, will be final thermal momentum)
@@ -1036,19 +986,11 @@ exit(1);
 			rotate(zDir[1], zDir[2], zDir[3], pc_rec, 1);
 
 
-			std::cout << __LINE__ << " --- after rotatio check pc_rec " << std::endl;
-			std::cout << "pc_jet(p4) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			std::cout << "pc_med(p2) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-			std::cout << "pc_rec(p3) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
 
 			// --- Phase space limitation ---
 			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
 			double lim_high = (abs(p.pid) == 4) ? 1.0 : (1.0 - lim_low);  // heavy quarks allow full range
 			double lim_int = lim_high - lim_low;
-std::cout << "xLow:  " << lim_low << std::endl;
-std::cout << "Eloc :  " << Eloc << std::endl;
-std::cout << "mass:  " << mass << std::endl;
 
 			int nloopOut=0;
 			bool DONE = false;
@@ -1060,13 +1002,6 @@ std::cout << "mass:  " << mass << std::endl;
 					randomX=lim_low+lim_int*ran0(&config.rng.NUM1);
 					randomY=ran0(&config.rng.NUM1);
 				} while(tau_f(randomX,randomY,Eloc,mass)<1.0/base::pi/p.Tfrozen);
-				std::cout << "randomX " << randomX << std::endl;
-				std::cout << "randomY " << randomY << std::endl;
-				std::cout << "p.Tfrozen " << p.Tfrozen << std::endl;
-				std::cout << "alpha_s " << alpha_s << std::endl;
-				std::cout << "p.qhat_over_T3 " << p.qhat_over_T3 << std::endl;
-				std::cout << "p.Tint_lrf " << p.Tint_lrf << std::endl;
-				std::cout << dNg_over_dxdydt(p.pid,randomX,randomY,Eloc,mass,p.Tfrozen, alpha_s, p.qhat_over_T3, p.Tint_lrf) << std::endl;
 
 				int count = 0;
 				while(p.max_Ng*ran0(&config.rng.NUM1)>dNg_over_dxdydt(p.pid,randomX,randomY,Eloc,mass,p.Tfrozen, alpha_s, p.qhat_over_T3, p.Tint_lrf)) {
@@ -1092,11 +1027,6 @@ std::cout << "mass:  " << mass << std::endl;
 				pc_rad[0]=sqrt(pc_rad[1]*pc_rad[1]+pc_rad[2]*pc_rad[2]+pc_rad[3]*pc_rad[3]);
 
 
-				std::cout << " after sampling1 : pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
-std::cout << "kperp_gluon " << kperp_gluon << std::endl;
-std::cout << "theta_gluon " << theta_gluon << std::endl;
-std::cout << "randomX " << randomX << std::endl;
-std::cout << "randomY " << randomY << std::endl;
 				if(pc_rad[0]>(Eloc-mass)) {
 					pc_rad[1]=0.0;
 					pc_rad[2]=0.0;
@@ -1173,7 +1103,6 @@ std::cout << "randomY " << randomY << std::endl;
 						nloop2++;
 						continue;
 					} else if(doneA && doneB) {
-						std::cout << "Both solutions work!" << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << std::endl;
 						if(abs(sq0A)<abs(sq0B)) {
 							sq0=sq0A;
 							sqz=sqzA;
@@ -1193,13 +1122,6 @@ std::cout << "randomY " << randomY << std::endl;
 
 				} while (!doneAB && nloop1<config.counter.loopN && nloop2<config.counter.loopN);
 
-				std::cout << "sE1 " <<  sE1 << std::endl;
-				std::cout << "sq0 " <<  sq0 << std::endl;
-				std::cout << "sk0 " <<  sk0 << std::endl;
-				std::cout << "sp1x " <<  sp1x << std::endl;
-				std::cout << "sqx " <<  sqx << std::endl;
-				std::cout << "sqy " <<  sqy << std::endl;
-				std::cout << "sqz " <<  sqz << std::endl;
 
 				if(!doneAB) {
 					nloopOut++;
@@ -1230,9 +1152,9 @@ std::cout << "randomY " << randomY << std::endl;
 
 			} while(!DONE && nloopOut<config.counter.loopN);
 
-			std::cout << "pc_rec " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			std::cout << "pc_fin " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
-			std::cout << "pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
+			//std::cout << "pc_rec " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
+			//std::cout << "pc_fin " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			//std::cout << "pc_rad " <<  pc_rad[0] << "  " << pc_rad[1] << "  " << pc_rad[2] << "  " << pc_rad[3] << std::endl;
 
 			if(!DONE) return false;
 			else return true;

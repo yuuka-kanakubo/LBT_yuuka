@@ -383,7 +383,6 @@ void runLBT(std::ifstream& fpList,
 			for (double ti = config.clock.time0 + config.clock.dt;
 					ti <= config.clock.timend + base::epsilon;
 					ti += config.clock.dt) {
-				std::cout << __FILE__ << "(" << __LINE__ << ")" << "ti " << ti << std::endl;
 				lbtcl.LBT(partons_event, ti);
 			}
 		}

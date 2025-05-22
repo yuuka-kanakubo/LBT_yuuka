@@ -64,10 +64,7 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	// Local interaction time
 	//double dt_lrf = config.clock.dt * sqrt(1.0 - pow(p.vcfrozen[1], 2) - pow(p.vcfrozen[2], 2) - pow(p.vcfrozen[3], 2));
 	double dt_lrf = config.clock.dt*p.timedilation;
-std::cout << "        check Tint_lrf " << p.Tint_lrf << std::endl;
 	p.Tint_lrf += dt_lrf;
-std::cout << "         -- dt " << config.clock.dt << std::endl;
-std::cout << "         -- flowFactor " << p.timedilation << std::endl;
 
 	// --- Update expected number of gluons radiated ---
 	if (p.pid == 21) {
@@ -130,9 +127,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	// Decide flavor outcome
 	int channel, pid_med, pid_rec;
 	flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel, pid_med, pid_rec);
-	std::cout << "pid med " << pid_med <<  std::endl;
-	std::cout << "pid rec " << pid_rec <<  std::endl;
-	std::cout << "channel " << channel <<  std::endl;
 
 	// Deactivate incoming parton
 	p.isActive = false;
@@ -148,9 +142,6 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	p_rec.assign_index();
 	p_fin.assign_index();
 
-	// Optionally: log the event
-	std::cout << "Elastic collision (channel=" << channel << ") at t=" << p.V[0]
-		<< ": pid=" << p.pid << " → pid_med=" << pid_med << ", pid_rec=" << pid_rec << std::endl;
 
 	double qt;
 	std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
@@ -265,7 +256,6 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 		if(it->CAT==3 && (it->kid1==p.kid1 || it->kid1==p.kid2)){
 			partner = it->index();
 			p_med = *it;
-			std::cout << "FOUND partner! -->  " << partner << std::endl;  
 		}
 	}
 	if(partner<0){
@@ -284,18 +274,15 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	Particle *p_fin_ptr = nullptr;
 	bool FOUND1 = false;
 	bool FOUND2 = false;
-	std::cout << "Finding recoiled and final parton in 2->2." << std::endl;
 	for (auto it = part_current.rbegin(); it != part_current.rend(); ++it) {
 		if((it->index()==p.kid1 || it->index()==p.kid2)){
 			if(!it->isPrimary){
 				rec_kid = it->index();
 				p_rec_ptr = &(*it);
-				std::cout << "FOUND kid(rec)! -->  " << rec_kid << std::endl;  
 				FOUND1 = true;
 			}else{
 				fin_kid = it->index();
 				p_fin_ptr = &(*it);
-				std::cout << "FOUND kid(fin)! -->  " << fin_kid << std::endl;  
 				FOUND2 = true;
 			}
 			if(FOUND1 && FOUND2){ break; }
@@ -597,11 +584,9 @@ bool LBTcl::belowCutOff(const double Eloc, const Particle &p){
 	double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 	double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 	if(Eloc<sqrt(qhat0)) {
-		std::cout << __LINE__ << "Eloc < sqrt(qhat0)" << Eloc << "<" << sqrt(qhat0) << std::endl;
 		return true;
 	}
 	if(Eloc<config.flow.Ecmcut) {
-		std::cout << __LINE__ << " pc0[0]<Ecmcut " << Eloc <<  "<" << config.flow.Ecmcut<< std::endl;
 		return true;
 	}
 	return false;
@@ -614,9 +599,12 @@ void LBTcl::FinalTouch(Particle &p, std::vector<Particle> & part_current){
 
 	for (auto it = part_current.begin(); it != part_current.end(); ++it) {
 		//Set to zero except primary (leading) partons 
+		//Primary particle is reset when it's 2->3.
 		if (it != part_current.begin()) {
 			it->Tint_lrf = 0.0;
 		}
+		//Reset radng for all particle
+		it->radng = 0.0;
 
 		if(it->P[0]<config.physics.Ecut){
 			it->CAT = 1;
@@ -629,13 +617,18 @@ void LBTcl::FinalTouch(Particle &p, std::vector<Particle> & part_current){
 
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
+	int n_newparticle_onetimestep=0;
 	archive_np_snapshot((int)part_event.size());  // snapshot of part_event at start of this step "np0"
+				//CHECKING
+				for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+					it->Print(true);
+				}
 
 	// Loop over all active part_event at this step
 	for (int i = 0; i < np_snapshot; ++i) {
+
 		Particle &p = part_event[i];
 
-		std::cout << "===============  i " << i << "  CAT " << p.CAT << "  index " << p.index() << std::endl;
 		// Skip frozen or inactive part_event
 		//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled OR medium OR radiated)) particles may join the loop
 		//medium particle just propagates.
@@ -646,10 +639,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 			p.CAT=1;
 		}
 
-		std::cout << ":):):):) Particle ....... " << i << "   at time " << ti << std::endl;
-		std::cout << ".......             P     " << p.P[0] << std::endl;
-		std::cout << ".......             V     " << p.V[0] << std::endl;
-		std::cout << ".......             index " << p.index() << std::endl;
 
 		int free = 0;
 		double fraction = 0.0;
@@ -672,22 +661,28 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 						}
 					}
 				}
+
 				if (medpart<0){
 					std::cout << "ERROR: Missing partner " << std::endl;
 					exit(EXIT_FAILURE);
-				}else{
-					std::cout << "Missing partner FOUND --> " << medpart << std::endl;
 				}
 			}
 		}
 		if(p.CAT==3){
-			std::cout << "THIS IS MEDIUM PARTON -- just propagation. " << std::endl;
+			//std::cout << "THIS IS MEDIUM PARTON -- just propagation. " << std::endl;
 			free=0;
 			continue;
 		}
 		//=========================================
 
-
+		std::cout << "===============  " << std::endl;
+		std::cout << ":) Particle    at time " << ti << std::endl;
+		std::cout << "             P     " << p.P[0] << std::endl;
+		std::cout << "             V     " << p.V[0] << std::endl;
+		std::cout << "             V1     " << p.V[1] << std::endl;
+		std::cout << "             CAT     " << p.CAT << std::endl;
+		std::cout << "             Tint     " << p.Tint_lrf << std::endl;
+		std::cout << "             radng     " << p.radng << std::endl;
 
 		if (p.CAT != 1 && free == 0) {
 
@@ -705,7 +700,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 			// Query medium
 			double T = p.Tfrozen;
 			double qhat = computeScatteringRate(p, PLenloc, T);
-			std::cout << "qhat " << qhat << std::endl;
 
 			// Compute probabilities
 			double probRad = computeRadiationProbability(p, T, Eloc);
@@ -727,27 +721,14 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				int n_newparticle=0;
 
 
-				std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleElasticCollision. " << std::endl;
 				double qt = handleElasticCollision(p, PLenloc, part_event, part_current);
 				n_newparticle++;//increment for recoiled parton. Medium parton is not counted.
 
-				//CHECKING
-				//std::cout << __FILE__ << "(" << __LINE__ << ")" << "After handleElastic" << std::endl;
-				//for (auto it = part_event.begin(); it != part_event.end(); ++it) {
-				//	it->Print(true);
-				//}
-				//std::cout << "=======event part / current part =======" << std::endl;
-				//for (auto it = part_current.begin(); it != part_current.end(); ++it) {
-				//	it->Print(true);
-				//}
-				//CHECKING
 
-				std::cout << "--- throw dice for radiation??---  qt " << qt << std::endl;
 				if(config.physics.Kinteraction==0 || (qt<base::epsilon)) continue;
 				double throwdice_rad = ran0(&config.rng.NUM1);
-				std::cout << "--- throw dice for radiation!---  " << throwdice_rad << std::endl;
+				std::cout << "--- throw dice for radiation! ---  " << throwdice_rad << std::endl;
 				if (throwdice_rad < probRad / probTot) {
-					std::cout << __FILE__ << "(" << __LINE__ << ")" << "Calling handleRadiation. " << std::endl;
 					int n_radiated = handleRadiation(p, qt, part_event, part_current);
 					n_newparticle += n_radiated;
 				}
@@ -755,7 +736,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				//Set V[0] (=t) for newly created particles and the current particle.
 				for (auto it = part_current.begin(); it != part_current.end(); ++it) {
 					it->V[0]=-log(1.0-ran0(&config.rng.NUM1));
-					std::cout << "V0 reset! (ip loop)" << std::endl;
 				}
 
 
@@ -773,7 +753,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				part_event.insert(part_event.begin() + (i+1),  part_current.begin(), part_current.begin() + 1);
 				part_event.insert(part_event.end(), part_current.begin() + 1, part_current.end());
 				std::vector<Particle>().swap(part_current);
-				np_snapshot += n_newparticle;
+				n_newparticle_onetimestep += n_newparticle;
 
 
 			}
@@ -783,6 +763,9 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 		}//positive and free ==0(in medium)
 	}//particle loop
+
+	np_snapshot += n_newparticle_onetimestep;
+
 	return;
 }
 
