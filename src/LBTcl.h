@@ -13,7 +13,6 @@ class LBTcl{
 	private:
 
 		int np_snapshot;
-		void archive_np_snapshot(int val){this->np_snapshot = val;}
 		bool belowCutOff(const double Eloc, const Particle &p);
 
 		LBTConfig& config;
@@ -1471,6 +1470,7 @@ exit(1);
 
 
 		void LBT(std::vector<Particle> &particles, double ti);
+		void set_np_snapshot(const int np_snapshot_in){this->np_snapshot = np_snapshot_in;}
 
 		LBTcl(LBTConfig& config_in):config(config_in){
 

@@ -378,7 +378,7 @@ void runLBT(std::ifstream& fpList,
 
 		// Time evolution (skipping detailed LBT logic)
 
-
+		lbtcl.set_np_snapshot(np);
 		if (config.medium.vacORmed == 1) {
 			for (double ti = config.clock.time0 + config.clock.dt;
 					ti <= config.clock.timend + base::epsilon;

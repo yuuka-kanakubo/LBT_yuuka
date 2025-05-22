@@ -81,6 +81,9 @@ struct Particle {
 		//std::cout << "------------------ this particle is not actuve: index " << this->index_ << std::endl;
 			return;
 		}
+		if(printonlyActive==true && this->CAT==3) {
+			return;
+		}
 		std::cout << "----" << std::endl;
 		std::cout 
 			<< "[ index  "

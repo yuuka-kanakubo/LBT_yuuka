@@ -218,9 +218,11 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	p_rec.copy_thisV_to_vcfrozen(p.vcfrozen);
 
 
+        //This is very important,
+	//so do not mess up the order.
 	part_current.push_back(p_fin);
-	part_current.push_back(p_rec);
 	part_current.push_back(p_med);
+	part_current.push_back(p_rec);
 
 	return qt;
 }
@@ -399,6 +401,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 		//            double pc2_more[4] = {0.0};
 		//            double pc4_more[4] = {0.0};
 		//            double pb[4] = {0.0};
+		std::cout << "refactor not done for radiationHQ" << std::endl;
 		exit(1);
 		//
 		std::array <double, 4> pc_rad1 = {0.,0.,0.,0.};
@@ -425,6 +428,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 				extraGluon.P[j] = pc_rad2[j];
 				extraGluon.V[j] = p.V[j];
 			}
+			extraGluon.V[0]=-log(1.0-ran0(&config.rng.NUM1));
 			extraGluon.pid = 21;
 			extraGluon.CAT = 4;
 			extraGluon.Tfrozen = p.Tfrozen;
@@ -610,6 +614,9 @@ void LBTcl::FinalTouch(Particle &p, std::vector<Particle> & part_current){
 			it->CAT = 1;
 		}
 	}
+
+
+
 	return;
 }
 
@@ -618,11 +625,11 @@ void LBTcl::FinalTouch(Particle &p, std::vector<Particle> & part_current){
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 	int n_newparticle_onetimestep=0;
-	archive_np_snapshot((int)part_event.size());  // snapshot of part_event at start of this step "np0"
-				//CHECKING
-				for (auto it = part_event.begin(); it != part_event.end(); ++it) {
-					it->Print(true);
-				}
+
+	//CHECKING
+	for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+		it->Print(true);
+	}
 
 	// Loop over all active part_event at this step
 	for (int i = 0; i < np_snapshot; ++i) {
@@ -731,11 +738,27 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				if (throwdice_rad < probRad / probTot) {
 					int n_radiated = handleRadiation(p, qt, part_event, part_current);
 					n_newparticle += n_radiated;
+					if(n_radiated>1) std::cout << "something is wrong " << n_radiated << std::endl;
 				}
 
 				//Set V[0] (=t) for newly created particles and the current particle.
-				for (auto it = part_current.begin(); it != part_current.end(); ++it) {
-					it->V[0]=-log(1.0-ran0(&config.rng.NUM1));
+				//Although V0 should be already assigned for rad ..TODO
+				//V[0] is assigned as following ordering in order to get consistent result with original LBT.
+				//fin -> rec -> med -> rad
+				for (int k=0; k<(int)part_current.size(); ++k) {
+					if(k==1){
+						Particle &p_tmp_rec = part_current[k+1];
+						p_tmp_rec.V[0]=-log(1.0-ran0(&config.rng.NUM1));
+						std::cout << "assigning V0 (i) " << p_tmp_rec.V[0] << " to P0 " << p_tmp_rec.P[0] << std::endl;
+					}else if(k==2){
+						Particle &p_tmp_med = part_current[k-1];
+						p_tmp_med.V[0]=-log(1.0-ran0(&config.rng.NUM1));
+						std::cout << "assigning V0 (i) " << p_tmp_med.V[0] << " to P0 " << p_tmp_med.P[0] << std::endl;
+					}else{
+						Particle &p_tmp = part_current[k];
+						p_tmp.V[0]=-log(1.0-ran0(&config.rng.NUM1));
+						std::cout << "assigning V0 (i) " << p_tmp.V[0] << " to P0 " << p_tmp.P[0] << std::endl;
+					}
 				}
 
 
@@ -748,20 +771,67 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				//CheckParticleWithSmallEnegy and resetInteractionTime
 				FinalTouch(p, part_current);
 
-				//Putting back the final state Primary particle back to the same position.
-				//Then rest of the part_current (newly created particles at the end of part_event)
+				//Now event_current looks like [fin, med, rec, rad, rad1...]
+				//1. I would like to put fin back to the original location of the leading parton.
 				part_event.insert(part_event.begin() + (i+1),  part_current.begin(), part_current.begin() + 1);
-				part_event.insert(part_event.end(), part_current.begin() + 1, part_current.end());
+
+				//2. Here, I would like to move !isActive at the end of part_event.
+				size_t i_ancester = i;
+				if (i < part_event.size() - 1) { // Only needed if not already at the end
+					std::rotate(part_event.begin() + i, part_event.begin() + i + 1, part_event.end());
+				} 
+
+				//3. Now, the element formerly at event[i] is at event.back()
+				//   Put [.., rec, rad, rad1...] at the #np_snapshot
+				size_t i_med = 1;
+				if(part_current[i_med].CAT!=3){
+					std::cout << "ERROR: Something is wrong with the newly added particles. " 
+						<< part_current[i_med].CAT << std::endl;
+					exit(EXIT_FAILURE);
+				}
+				//Putting elements AFTER the med particle. ("begin() + i_med + 1" to "end()")
+				std::cout << "np_snapshot ... " << np_snapshot << std::endl;
+				part_event.insert(part_event.begin() + (size_t)np_snapshot, 
+						part_current.begin() + i_med + 1, 
+						part_current.end());
+				//std::cout << std::endl << " NEWPARTICLES " << np_snapshot << std::endl;
+				//for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+				//	it->Print(true);
+				//}
+				//std::cout << " NEWPARTICLES " << np_snapshot << std::endl << std::endl;
+
+				//Here, I would like to move medium particles to the end.
+				part_event.push_back(part_current[i_med]);
+
 				std::vector<Particle>().swap(part_current);
 				n_newparticle_onetimestep += n_newparticle;
+
+
+				bool FOUND_med=false;
+				int last_med= -1;
+				for(auto it = part_event.begin(); it != part_event.end(); ++it){
+					if(it->CAT==3) {
+						FOUND_med = true;
+						last_med= it->index();
+					}
+					if(FOUND_med && (it->CAT==2||it->CAT==4) && it->isActive) {
+					std::cout << "ERROR: order is messed up. "  << std::endl;
+                                        std::cout << " found it->index() " << it->index() << "  after medium " << last_med << std::endl;
+						//CHECKING
+						for (auto it = part_event.begin(); it != part_event.end(); ++it) {
+							it->Print(true);
+						}
+						exit(1);
+					}
+				}
 
 
 			}
 			// Reset radiation tracker
 			p.radng = 0.0;
 
-
 		}//positive and free ==0(in medium)
+
 	}//particle loop
 
 	np_snapshot += n_newparticle_onetimestep;
