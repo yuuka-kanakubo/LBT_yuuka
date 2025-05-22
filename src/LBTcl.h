@@ -21,7 +21,7 @@ class LBTcl{
 		double computeRadiationProbability(Particle &p, double T, double E);
 		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles_current, 
 				std::vector<Particle> &particles);
-		void handleRadiation(Particle &p, const double qt, std::vector<Particle> &particles_current, 
+		int handleRadiation(Particle &p, const double qt, std::vector<Particle> &particles_current, 
 				std::vector<Particle> &particles);
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
@@ -31,7 +31,7 @@ class LBTcl{
 				double T,
 				double fraction
 				);
-		void CheckParticleWithSmallEnegy(Particle &p, std::vector<Particle> & part_current);
+		void FinalTouch(Particle &p, std::vector<Particle> & part_current);
 
 
 
@@ -172,7 +172,7 @@ class LBTcl{
 		double nHQgluon(Particle &p, const double dtLRF,
 				const double temp_med_,const double HQenergy_){
 			// gluon radiation probability for heavy quark       
-			std::cout << "nHQgluon! " << std::endl;
+			std::cout << "nHQgluon! -- Tint_lrf" << p.Tint_lrf << std::endl;
 			int flavour = p.pid;
 			double time_gluon = p.Tint_lrf;
 			double temp_med = temp_med_;
@@ -257,12 +257,14 @@ class LBTcl{
 
 			std::cout << " D2piT " << p.D2piT << std::endl;
 			std::cout << " dtLRF " << dtLRF << std::endl;
+			std::cout << " Tint_lrf " << time_gluon << std::endl;
 			std::cout << " rate_T2E1 " << rate_T2E1 << std::endl;
 
 
 			delta_Ng*=6.0/p.D2piT*dtLRF;
 			max_Ng*=6.0/p.D2piT;
 			p.max_Ng = max_Ng;
+			p.Tint_lrf = time_gluon;
 
 			//  if(delta_Ng>1) {
 			//     std::cout << "Warning: Ng greater than 1   " << time_gluon << "  " << delta_Ng << std::endl;
@@ -1058,6 +1060,13 @@ std::cout << "mass:  " << mass << std::endl;
 					randomX=lim_low+lim_int*ran0(&config.rng.NUM1);
 					randomY=ran0(&config.rng.NUM1);
 				} while(tau_f(randomX,randomY,Eloc,mass)<1.0/base::pi/p.Tfrozen);
+				std::cout << "randomX " << randomX << std::endl;
+				std::cout << "randomY " << randomY << std::endl;
+				std::cout << "p.Tfrozen " << p.Tfrozen << std::endl;
+				std::cout << "alpha_s " << alpha_s << std::endl;
+				std::cout << "p.qhat_over_T3 " << p.qhat_over_T3 << std::endl;
+				std::cout << "p.Tint_lrf " << p.Tint_lrf << std::endl;
+				std::cout << dNg_over_dxdydt(p.pid,randomX,randomY,Eloc,mass,p.Tfrozen, alpha_s, p.qhat_over_T3, p.Tint_lrf) << std::endl;
 
 				int count = 0;
 				while(p.max_Ng*ran0(&config.rng.NUM1)>dNg_over_dxdydt(p.pid,randomX,randomY,Eloc,mass,p.Tfrozen, alpha_s, p.qhat_over_T3, p.Tint_lrf)) {
