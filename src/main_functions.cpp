@@ -385,6 +385,7 @@ void runLBT(std::ifstream& fpList,
 					ti += config.clock.dt) {
 				lbtcl.LBT(partons_event, ti);
 			}
+                        std::cout << "LBT evolution completed in event# " << n << std::endl;
 		}
 
 		++numEvent;

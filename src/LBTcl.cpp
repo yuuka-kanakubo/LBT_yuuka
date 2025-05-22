@@ -634,6 +634,11 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 	// Loop over all active part_event at this step
 	for (int i = 0; i < np_snapshot; ++i) {
 
+		if(i>=(int)part_event.size()){
+			std::cout << "ERROR! i is beyond part_event[i], i " 
+				<< i << "  while (int)part_event.size() " << (int)part_event.size() << std::endl;
+			exit(EXIT_FAILURE);
+		}
 		Particle &p = part_event[i];
 
 		// Skip frozen or inactive part_event
@@ -789,9 +794,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 						<< part_current[i_med].CAT << std::endl;
 					exit(EXIT_FAILURE);
 				}
-				//Putting elements AFTER the med particle. ("begin() + i_med + 1" to "end()")
+				//Putting current elements AFTER the med particle. ("begin() + i_med + 1" to "end()")
 				std::cout << "np_snapshot ... " << np_snapshot << std::endl;
-				part_event.insert(part_event.begin() + (size_t)np_snapshot, 
+				std::cout << "n_newparticle_onetimestep ... " << n_newparticle_onetimestep << std::endl;
+				part_event.insert(part_event.begin() + (size_t)np_snapshot + n_newparticle_onetimestep, 
 						part_current.begin() + i_med + 1, 
 						part_current.end());
 				//std::cout << std::endl << " NEWPARTICLES " << np_snapshot << std::endl;
