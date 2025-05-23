@@ -35,7 +35,7 @@
 struct Particle {
         double P[6] = {0.0};        // Four-momentum (E, px, py, pz, m, pt)
         double V[4] = {0.0};        // Position (t or tau, x, y, z)
-        int CAT = 0;                // Category: 0=active, 1=free streaming, 2=recoiled, 3=medium(negative), 4=radiated
+        int CAT = -1;                // Category: 0=primary, 1=free streaming, 2=recoiled, 3=medium(negative), 4=radiated
         int pid = 0;               // Flavor code
         double Vfrozen[4] = {0.0};  // Frozen position (for interpolation)
         double Tfrozen = 0.0;       // Temperature when frozen
@@ -44,7 +44,7 @@ struct Particle {
         double radng = 0.0;         // Average radiated gluons
         double WT = 1.0;            // Weight
         double mass = 0.0;          // Mass (0 for light partons, positive for heavy quarks)
-        bool isPrimary = false;     // True if parton is among the original initial partons (instead of nj)
+        bool isLeading = false;     // Particles which may collide with medium. (instead of nj) or, recoiled, radiated/
         bool isActive = false;     // True if parton exist, and not a past history.
         double tot_el_rate = 0.0;     // Total elastic scattering rate (2->2)
         double Xtau_keep = 0.0;     // Xtau calculated by titau before propagation.
@@ -96,8 +96,8 @@ struct Particle {
 			<< std::setw(6)  << this->pid
 			<< "]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated"
 			<< std::setw(6)  << this->CAT
-			<< "] [isActive / isPrimary "
-			<< std::setw(6)  << this->isActive << "/" << std::setw(6) << this->isPrimary
+			<< "] [isActive / isLeading "
+			<< std::setw(6)  << this->isActive << "/" << std::setw(6) << this->isLeading
 			<< "]"
 			<< std::endl
 			<< " P  "

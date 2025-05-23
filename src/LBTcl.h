@@ -32,6 +32,7 @@ class LBTcl{
 				);
 		void FinalTouch(Particle &p, std::vector<Particle> & part_current);
 
+		void Sortingout_new_particles(std::vector<Particle> &part_current);
 
 
 

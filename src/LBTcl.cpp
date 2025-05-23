@@ -188,9 +188,9 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	p_med.isActive = true;
 	p_rec.isActive = true;
 
-	p_fin.isPrimary = true;//lost energy, still primary.
-	p_med.isPrimary = false;
-	p_rec.isPrimary = false;
+	p_fin.isLeading = true;//lost energy, still primary.
+	p_med.isLeading = false;
+	p_rec.isLeading = false;
 
 	p_med.CAT = 3;//negative
 	p_rec.CAT = 2;//recoiled 
@@ -278,7 +278,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	bool FOUND2 = false;
 	for (auto it = part_current.rbegin(); it != part_current.rend(); ++it) {
 		if((it->index()==p.kid1 || it->index()==p.kid2)){
-			if(!it->isPrimary){
+			if(!it->isLeading){
 				rec_kid = it->index();
 				p_rec_ptr = &(*it);
 				FOUND1 = true;
@@ -346,7 +346,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	gluon.vcfrozen[3] = p.vcfrozen[3];
 	gluon.WT = p.WT;
 	gluon.mass = 0.0;
-	gluon.isPrimary = false;
+	gluon.isLeading = false;
 	gluon.isActive = true;
 	gluon.parent1 = p.index();
 	gluon.parent2 = partner;//medium partner of p (leading parton)
@@ -437,7 +437,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 			extraGluon.vcfrozen[3] = p.vcfrozen[3];
 			extraGluon.WT = p.WT;
 			extraGluon.mass = 0.0;
-			extraGluon.isPrimary = false;
+			extraGluon.isLeading = false;
 			extraGluon.isActive = true;
 			extraGluon.parent1 = p.index();
 			extraGluon.parent2 = partner;
@@ -601,32 +601,34 @@ bool LBTcl::belowCutOff(const Particle &p){
 
 	std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
 	std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-		std::cout << "vc0 " 
-			<< vc0[0] << "  " 
-			<< vc0[1] << "  " 
-			<< vc0[2] << "  " 
-			<< vc0[3] << "  " 
-			<< std::endl;
-		std::cout << "pc0 " 
-			<< pc0[0] << "  " 
-			<< pc0[1] << "  " 
-			<< pc0[2] << "  " 
-			<< pc0[3] << "  " 
-			<< std::endl;
+	//	std::cout << "vc0 " 
+	//		<< vc0[0] << "  " 
+	//		<< vc0[1] << "  " 
+	//		<< vc0[2] << "  " 
+	//		<< vc0[3] << "  " 
+	//		<< std::endl;
+	//	std::cout << "pc0 " 
+	//		<< pc0[0] << "  " 
+	//		<< pc0[1] << "  " 
+	//		<< pc0[2] << "  " 
+	//		<< pc0[3] << "  " 
+	//		<< std::endl;
 
 	this->trans(vc0, pc0);
 	double Eloc = pc0[0];
 
 	double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 	double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
+	//std::cout << "pc0[0] " << pc0[0] << std::endl;
+	//std::cout << "sqrt(qhat) " << sqrt(qhat0) << std::endl;
 	if(Eloc<sqrt(qhat0)) {
-		std::cout << "pc0[0] " << pc0[0] << std::endl;
-		std::cout << "sqrt(qhat) " << sqrt(qhat0) << std::endl;
 		return true;
 	}
-		std::cout << "pc0[0] " << pc0[0] << std::endl;
-		std::cout << "Ecmcut " << config.flow.Ecmcut << std::endl;
-	if(Eloc<config.flow.Ecmcut && !p.isPrimary) {
+	//std::cout << "pc0[0] " << pc0[0] << std::endl;
+	//std::cout << "Ecmcut " << config.flow.Ecmcut << std::endl;
+
+	//set it to freestreaming when it is not primary AND below threshold.
+	if(Eloc<config.flow.Ecmcut && p.CAT!=0) {
 		return true;
 	}
 	return false;
@@ -657,6 +659,50 @@ void LBTcl::FinalTouch(Particle &p, std::vector<Particle> & part_current){
 }
 
 
+void LBTcl::Sortingout_new_particles(std::vector<Particle> &part_current){
+
+	//Now event_current looks like [fin, med, rec, rad, rad1...]
+	//Here, I want to pick up rad with largest energy.
+	//Then compare it with fin.  If energy of radiated gluon is bigger,
+	//exchange P and pid with those of fin.
+	double rad_Emax = 0.0;
+	int i_rad_Emax = -1;
+	int pid_rad_Emax = 0;
+	std::array <double,4> P_rad_Emax = {0.,0.,0.,0.};
+	for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+              if(it->CAT==4 && (rad_Emax < it->P[0])) {
+		      rad_Emax = it->P[0];
+		      i_rad_Emax = it->index();
+		      pid_rad_Emax = it->pid;
+		      for(int i=0; i<4; i++) P_rad_Emax[i] = it->P[i];
+	      }
+	}
+	if(!part_current[0].isLeading){
+		std::cout << "Something is wring with the orider. " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	if(part_current[0].P[0]<rad_Emax){
+		//Then exchange!
+		std::cout << "Exchange! radiated gluon has large energy -- index " << i_rad_Emax << std::endl;
+		std::array <double,4> P_tmp = {0.,0.,0.,0.};
+		for(int i=0; i<4; i++) P_tmp[i] = part_current[0].P[i];
+		double pid_tmp = part_current[0].pid;
+		part_current[0].pid = pid_rad_Emax;
+		for(int i=0; i<4; i++) part_current[0].P[i] = P_rad_Emax[i];
+		for (auto it = part_current.begin(); it != part_current.end(); ++it) {
+                        if(it->index() == i_rad_Emax) {
+                                    it->pid = pid_tmp;
+                                    for(int i=0; i<4; i++) it->P[i] = P_tmp[i];
+			}
+		}
+
+	}
+
+	return;
+}
+
+
 
 void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
@@ -680,7 +726,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		// Skip frozen or inactive part_event
 		//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled OR medium OR radiated)) particles may join the loop
 		//medium particle just propagates.
-		if ((!p.isActive || (!p.isPrimary && p.CAT!=2 && p.CAT!=3 && p.CAT!=4)) || p.Vfrozen[0] >= ti) continue;
+		if ((!p.isActive || (p.CAT!=0 && p.CAT!=2 && p.CAT!=3 && p.CAT!=4)) || p.Vfrozen[0] >= ti) continue;
 		if (p.P[0]<base::epsilon){
 			std::cout << "  now this is going to be TERMINATED " << std::endl;
 			for(int k=0;k<=3;k++) p.V[i]=0.0;
@@ -812,6 +858,12 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 				//CheckParticleWithSmallEnegy and resetInteractionTime
 				FinalTouch(p, part_current);
+
+				//TODO: This should be in principle done just after Radiation.
+				//More energetic parton should be Leading.
+				//When 2->2 and 2->3 (at least one radiation) happens
+				if(n_newparticle>=2) Sortingout_new_particles(part_current);
+
 
 				//Now event_current looks like [fin, med, rec, rad, rad1...]
 				//1. I would like to put fin back to the original location of the leading parton.

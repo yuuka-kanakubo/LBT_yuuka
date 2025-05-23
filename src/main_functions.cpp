@@ -345,7 +345,8 @@ void runLBT(std::ifstream& fpList,
 
 				p.assign_index();
 				p.isActive = true;
-				p.isPrimary = true;
+				p.isLeading = true;
+				p.CAT = 0;
 				partons_event.push_back(p);
 				++count;
 			}
