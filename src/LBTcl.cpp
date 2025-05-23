@@ -496,6 +496,11 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		double VX, VY, VZ, ed, sd;
 		double &temp = (p.CAT!=5)? config.medium.temp0: config.medium.temp00; 
 		int hydro_ctl = 0;
+		if(zcar>tcar){
+			std::cout << "WARNING! z > t: " << zcar << " > " << tcar << std::endl;  
+			std::cout << "WARNING! z = t  is enforced. " << std::endl;  
+			zcar = tcar;
+		}
 
 		if (config.medium.bulkFlag == 1) {
 			readhydroinfoshanshan_(&tcar,&xcar,&ycar,&zcar,&ed,&sd,&temp,&VX,&VY,&VZ,&hydro_ctl);
@@ -506,8 +511,6 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 			hydro_ctl = 0;
 		}
 
-std::cout << "hydro_ctl " << hydro_ctl << std::endl;
-std::cout << "temp " << temp << std::endl;
 
 		// If medium is alive
 		if (hydro_ctl == 0 && temp >= config.medium.hydro_Tc) {
@@ -684,7 +687,7 @@ void LBTcl::Sortingout_new_particles(std::vector<Particle> &part_current){
 
 	if(part_current[0].P[0]<rad_Emax){
 		//Then exchange!
-		std::cout << "Exchange! radiated gluon has large energy -- index " << i_rad_Emax << std::endl;
+		//std::cout << "Exchange! radiated gluon has large energy -- index " << i_rad_Emax << std::endl;
 		std::array <double,4> P_tmp = {0.,0.,0.,0.};
 		for(int i=0; i<4; i++) P_tmp[i] = part_current[0].P[i];
 		double pid_tmp = part_current[0].pid;
@@ -884,8 +887,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 					exit(EXIT_FAILURE);
 				}
 				//Putting current elements AFTER the med particle. ("begin() + i_med + 1" to "end()")
-				std::cout << "np_snapshot ... " << np_snapshot << std::endl;
-				std::cout << "n_newparticle_onetimestep ... " << n_newparticle_onetimestep << std::endl;
 				part_event.insert(part_event.begin() + (size_t)np_snapshot + n_newparticle_onetimestep, 
 						part_current.begin() + i_med + 1, 
 						part_current.end());
@@ -916,7 +917,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 						for (auto it = part_event.begin(); it != part_event.end(); ++it) {
 							it->Print(true);
 						}
-						exit(1);
+						exit(EXIT_FAILURE);
 					}
 				}
 

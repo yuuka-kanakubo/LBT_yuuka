@@ -127,6 +127,53 @@ struct Particle {
 			<< std::endl;
 
 	}
+	void PrintMed(){
+		if(this->CAT!=3) {
+			return;
+		}
+		std::cout << "----" << std::endl;
+		std::cout 
+			<< "[ index  "
+			<< std::setw(6)  << this->index_
+			<< "],  [parent1 / parent2  "
+			<< std::setw(6)  << this->parent1 << "/" << std::setw(6) << this->parent2
+			<< "],  [kid1 / kid2  "
+			<< std::setw(6)  << this->kid1 << "/" << std::setw(6) << this->kid2
+			<< "],  [pid  "
+			<< std::setw(6)  << this->pid
+			<< "]   [CAT 1:freestrm, 2:recoiled, 3:medium(negative), 4:radiated"
+			<< std::setw(6)  << this->CAT
+			<< "] [isActive / isLeading "
+			<< std::setw(6)  << this->isActive << "/" << std::setw(6) << this->isLeading
+			<< "]"
+			<< std::endl
+			<< " P  "
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[0]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[1]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[2]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[3]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->P[4]
+			<< std::endl
+			<< " V  "
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[0]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[1]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[2]
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->V[3]
+			<< std::endl
+			<< "Vfrozen  "
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[0] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[1] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[2] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->Vfrozen[3] 
+			<< std::endl
+			<< "vcfrozen  "
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[0] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[1] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[2] 
+			<< std::setw(15) << std::setprecision(8) << std::fixed <<  this->vcfrozen[3] 
+			<< std::endl;
+
+	}
 
 	void assign_index(){ 
 		this->index_ = index_counter; 
