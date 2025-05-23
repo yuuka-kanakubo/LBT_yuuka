@@ -10,18 +10,16 @@
 
 class LBTcl{
 
-	private:
+	public:
 
 		int np_snapshot;
 		bool belowCutOff(const Particle &p);
 
 		LBTConfig& config;
-		double computeScatteringRate(Particle &p, const double PLen, const double T);
+		void computeScatteringRate(Particle &p, const double PLen, const double T);
 		double computeRadiationProbability(Particle &p, double T, double E);
-		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles_current, 
-				std::vector<Particle> &particles);
-		int handleRadiation(Particle &p, const double qt, std::vector<Particle> &particles_current, 
-				std::vector<Particle> &particles);
+		double handleElasticCollision(Particle &p, const double PLen, std::vector<Particle> &particles);
+		int handleRadiation(Particle &p, const double qt, std::vector<Particle> &particles);
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
 				Particle &p,
@@ -371,7 +369,7 @@ class LBTcl{
 			}
 			else {
 				double R0 = RTE;
-				double R3 = RTEq3, R4 = RTEq4, R5 = RTEq5, R6 = RTEq6, R7 = RTEq7, R8 = RTEq8;
+				double R3 = RTEq3, R4 = RTEq4, R5 = RTEq5, R6 = RTEq6, R7 = RTEq7;
 
 				if (a <= R3 / R0) {
 					channel = 13;
@@ -414,10 +412,6 @@ class LBTcl{
 				double& e2_out
 				) {
 
-			// Compute HQ mass
-			double HQmass2 = pc_jet[0]*pc_jet[0] - pc_jet[1]*pc_jet[1] - pc_jet[2]*pc_jet[2] - pc_jet[3]*pc_jet[3];
-			double HQmass = (HQmass2 > 1e-12) ? std::sqrt(HQmass2) : 0.0;
-
 			// Get momentum magnitude and temperature bin indices
 			double P = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3]);
 			int idx_P = std::clamp(static_cast<int>((P - config.hq22.min_p1) / config.hq22.bin_p1), 0, config.hq22.N_p1 - 1);
@@ -437,6 +431,12 @@ class LBTcl{
 				} else if (channel == 12) {
 					fval = config.hq22.distFncB[idx_T][idx_P][idx_e2] / fBmax;
 					maxWeight = config.hq22.distMaxB[idx_T][idx_P][idx_e2];
+				} else {
+					std::cout 
+						<< "ERROR:  This function sampleThermalParton is called only within the collHQ22."
+						<< " Only channel =11 or 12 is allowed." 
+						<< std::endl;
+					exit(EXIT_FAILURE);
 				}
 
 				if (ran0(&config.rng.NUM1) < fval) {
@@ -745,7 +745,6 @@ class LBTcl{
 				}
 
 				double tmin = qhat0ud;
-				double tmid = s / 2.0;
 				double tmax = s - qhat0ud;
 
 
@@ -773,7 +772,7 @@ class LBTcl{
 
 			//Copy initial info
 			pc_fin = pc_jet;
-			LongitudinalMomentumTransfer(t, pc_jet, pc_rec, pc_fin);
+			LongitudinalMomentumTransfer(t, pc_rec, pc_fin);
 
 			transback(v_cm, pc_jet);
 			transback(v_cm, pc_rec);
@@ -801,7 +800,10 @@ class LBTcl{
 
 
 
-		void LongitudinalMomentumTransfer(const double t, const std::array<double, 4> pc_jet, std::array<double, 4>& pc_rec, std::array<double, 4>& pc_fin){
+		void LongitudinalMomentumTransfer(
+				const double t, 
+				std::array<double, 4>& pc_rec, 
+				std::array<double, 4>& pc_fin){
 
 
 			double pcm = pc_rec[0];
@@ -888,9 +890,11 @@ class LBTcl{
 			}
 
 			// Sample angles
-			double qhat0ud, e4, theta2, theta4, phi24;
+			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
+			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);
+			double e4, theta2, theta4, phi24;
 			bool anglesOK = sampleCollisionAngles(
-					channel, pc_jet, p.Tfrozen, e2, qhat0ud, maxWeight,
+					channel, pc_jet, p.Tfrozen, e2, qhat0, maxWeight,
 					e4, theta2, theta4, phi24
 					);
 			if (!anglesOK) {
@@ -938,6 +942,7 @@ class LBTcl{
 			transback(v_fluid, pc_fin);
 
 			for(int i=0; i<4; i++){
+				p_fin.V[i] = pc_fin[i];
 				p_rec.V[i] = pc_rec[i];
 				p_med.V[i] = pc_med[i];
 			}
@@ -1038,7 +1043,7 @@ exit(1);
 
 
 				//Solve energy conservation
-				double sqx,sqy,sqzA,sq0A,sqzB,sq0B,sqz,sq0,sqtheta;
+				double sqx,sqy,sqzA,sq0A,sqzB,sq0B,sqz,sq0;
 				int nloop1=0;
 				int nloop2=0;
 				bool doneA = false;
@@ -1216,9 +1221,7 @@ exit(1);
 
 			//At rest frame check if energy is too small.
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
-			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 			double Eloc = pc_fin0[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
-
 
 
 			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
@@ -1467,7 +1470,6 @@ exit(1);
 
 
 
-	public:
 
 
 		void LBT(std::vector<Particle> &particles, double ti);

@@ -16,10 +16,10 @@ void open_output(int argc, char* argv[],
 		std::ofstream& outLightPos,
 		std::ofstream& outLightNeg);
 void runLBT(std::ifstream& fpList,
-		std::ofstream& outHQ,
-		std::ofstream& outLightPos,
-		std::ofstream& outLightNeg,
 		LBTConfig& config);
+void writeout(std::ofstream& outHQ,
+		std::ofstream& outLightPos,
+		std::ofstream& outLightNeg);
 void finalize(std::ofstream& outHQ,
 		std::ofstream& outLightPos,
 		std::ofstream& outLightNeg,

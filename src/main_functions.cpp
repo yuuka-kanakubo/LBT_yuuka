@@ -6,13 +6,13 @@ void jetInitialize(){
 	std::cout << "Currently this is not implemented in the refactored version of LBT." << std::endl;
 	std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
 	exit(EXIT_FAILURE);
-};
+}
 void setJetX(int numInitXY){
 	std::cout << "Currently this is not implemented in the refactored version of LBT." << std::endl;
 	std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
 	exit(EXIT_FAILURE);
 
-};
+}
 
 
 
@@ -65,6 +65,8 @@ void readTables(LBTConfig &config) {
 
     if (config.jet.fixPosition != 1) {
         int dummy = read_xyMC(config);
+        std::cout << "ERROR: not refactored yet. " << dummy << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     // Read scattering rate table
@@ -117,7 +119,6 @@ void readTables(LBTConfig &config) {
         std::cerr << "Error opening dNg_over_dt tables!\n";
     } else {
         for (int k = 1; k <= config.hqrad.t_gn; ++k) {
-		int counter=0;
 		std::string dummy;
 		std::streampos pos = f14.tellg();
 		std::string headerLine;
@@ -303,9 +304,6 @@ void get_set_ready(std::vector <Particle>& part_event, LBTConfig& config){
 
 
 void runLBT(std::ifstream& fpList,
-		std::ofstream& outHQ,
-		std::ofstream& outLightPos,
-		std::ofstream& outLightNeg,
 		LBTConfig& config) {
 
 	int& nj = config.jet.nj;
@@ -404,6 +402,14 @@ void runLBT(std::ifstream& fpList,
 		}
 	}//Event loop
 }
+
+
+
+void writeout(std::ofstream& outHQ,
+		std::ofstream& outLightPos,
+		std::ofstream& outLightNeg){};
+
+
 
 
 void finalize(std::ofstream& outHQ,

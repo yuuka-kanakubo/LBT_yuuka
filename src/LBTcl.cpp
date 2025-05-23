@@ -9,7 +9,7 @@
 
 
 
-double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const double T_in) {
+void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const double T_in) {
 	// Lookup tables qhatG/qhatLQ/qhatHQ depending on flavor
 	// Interpolate based on PLen(E), T
 	// Return RTE (rate)
@@ -43,7 +43,8 @@ double LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const dou
 	p.qhat_over_T3 = qhat_over_T3;
 
 	// --- Step 5: Multiply by T^3 to get real qhat ---
-	return qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)
+	//qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)
+	return;
 }
 
 
@@ -116,14 +117,10 @@ double LBTcl::computeCollisionProbability(
 }
 
 
-double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &part_event, std::vector<Particle> &part_current) {
-	int parentIndex = p.index();
+double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vector<Particle> &part_current) {
 
-	// Step 1: Prepare momentum and flow for transformation
-	std::array <double, 4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
-	std::array <double, 4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 
-	// Step 2: Determine channel and output momenta
+	// Step 1: Determine channel and output momenta
 	// Decide flavor outcome
 	int channel, pid_med, pid_rec;
 	flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel, pid_med, pid_rec);
@@ -224,13 +221,38 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	part_current.push_back(p_med);
 	part_current.push_back(p_rec);
 
+
+	//Energy momentum conservation check
+	//in 2->2
+	//=============================
+	std::array <double, 4> P_ini = {
+		p.P[0]+ p_med.P[0],
+		p.P[1]+ p_med.P[1],
+		p.P[2]+ p_med.P[2],
+		p.P[3]+ p_med.P[3]
+	};
+	std::array <double, 4> P_fin = {
+		p_rec.P[0]+ p_fin.P[0],
+		p_rec.P[1]+ p_fin.P[1],
+		p_rec.P[2]+ p_fin.P[2],
+		p_rec.P[3]+ p_fin.P[3]
+	};
+
+	for(int i=0;i<4;i++)
+		if(fabs(P_fin[i]-P_ini[i])>base::tol*fabs(P_ini[i])){
+			std::cout << "ERROR! Energy-momentum conservation is violated in 2->2." << std::endl;
+			std::cout << i << "th component of P_ini: " << std::setw(15) << std::setprecision(12) << P_ini[i] << std::endl;
+			std::cout << i << "th component of P_fin: " << std::setw(15) << std::setprecision(12)<< P_fin[i] << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
 	return qt;
 }
 
 
 
 
-int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &part_event, std::vector<Particle> &part_current) {
+int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &part_current) {
 
 	int n_radiated = 0;
 
@@ -313,12 +335,15 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 
 
 
+
+
 	// Step 2: Call radiation kernel
 	//returns pc_rec, pc_rad, pc_fin
 	bool success23 = collHQ23(p, qt, pc_med, pc_rec, pc_rad, pc_fin);
 	//TODO: why?    //colljet23(T, qhat0, vc0, pc0, pc2, pc3, pc4, locqt, icl23, p.Tint_lrf, Ejp, iclrad);
 	if(!success23) return n_radiated;
 	else n_radiated++;
+
 
 
 	//Step 2.5: Additinal radiation or not?
@@ -384,6 +409,8 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 
 
 
+
+
 	//CHECKING
 	//std::cout << __FILE__ << "(" << __LINE__ << ")" << "After collHQ23" << std::endl;
 	//for (auto it = part_event.begin(); it != part_event.end(); ++it) {
@@ -395,6 +422,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	//}
 	//CHECKING
 
+	std::array <double, 4> P_add_rad = {0.,0.,0.,0.};
 
 	// Step 4: Handle multiple gluons (Poisson) for HQ
 	while (--nrad > 0) {
@@ -427,6 +455,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 			for (int j = 0; j < 4; ++j) {
 				extraGluon.P[j] = pc_rad2[j];
 				extraGluon.V[j] = p.V[j];
+				P_add_rad[j]+=pc_rad2[j];
 			}
 			extraGluon.V[0]=-log(1.0-ran0(&config.rng.NUM1));
 			extraGluon.pid = 21;
@@ -467,6 +496,37 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 		} else break;  // Stop emitting if emission fails
 
 	}//while
+
+
+	//Energy momentum conservation check
+	//in 2->4 or more
+	//=============================
+	std::array <double, 4> P_ini = {
+		p.P[0]+ p_med.P[0],
+		p.P[1]+ p_med.P[1],
+		p.P[2]+ p_med.P[2],
+		p.P[3]+ p_med.P[3]
+	};
+	std::array <double, 4> P_fin = {
+		p_rec_ptr->P[0]+ gluon.P[0]+ P_add_rad[0] + p_fin_ptr->P[0],
+		p_rec_ptr->P[1]+ gluon.P[1]+ P_add_rad[1] + p_fin_ptr->P[1],
+		p_rec_ptr->P[2]+ gluon.P[2]+ P_add_rad[2] + p_fin_ptr->P[2],
+		p_rec_ptr->P[3]+ gluon.P[3]+ P_add_rad[3] + p_fin_ptr->P[3]
+	};
+
+
+	for(int i=0;i<4;i++)
+		if(fabs(P_fin[i]-P_ini[i])>base::tol*fabs(P_ini[i])){
+			std::cout << "ERROR! Energy-momentum conservation is violated in 2->2." << std::endl;
+			std::cout << i << "th component of P_ini: " << std::setw(15) << std::setprecision(12) << P_ini[i] << std::endl;
+			std::cout << i << "th component of P_fin: " << std::setw(15) << std::setprecision(12)<< P_fin[i] << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	//=============================
+
+
+
+
 
 	return n_radiated;
 
@@ -727,8 +787,9 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		Particle &p = part_event[i];
 
 		// Skip frozen or inactive part_event
-		//Only Vfrozen<ti AND active particle (Active AND (primary OR recoiled OR medium OR radiated)) particles may join the loop
-		//medium particle just propagates.
+		// Only Vfrozen<ti AND active particle 
+		// (Active AND (primary OR recoiled OR medium OR radiated)) particles may join the loop
+		// medium particle just propagates.
 		if ((!p.isActive || (p.CAT!=0 && p.CAT!=2 && p.CAT!=3 && p.CAT!=4)) || p.Vfrozen[0] >= ti) continue;
 		if (p.P[0]<base::epsilon){
 			std::cout << "  now this is going to be TERMINATED " << std::endl;
@@ -797,7 +858,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 			// Query medium
 			double T = p.Tfrozen;
-			double qhat = computeScatteringRate(p, PLenloc, T);
+			computeScatteringRate(p, PLenloc, T);
 
 			// Compute probabilities
 			double probRad = computeRadiationProbability(p, T, Eloc);
@@ -819,7 +880,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				int n_newparticle=0;
 
 
-				double qt = handleElasticCollision(p, PLenloc, part_event, part_current);
+				double qt = handleElasticCollision(p, PLenloc, part_current);
 				n_newparticle++;//increment for recoiled parton. Medium parton is not counted.
 
 
@@ -827,7 +888,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				double throwdice_rad = ran0(&config.rng.NUM1);
 				std::cout << "--- throw dice for radiation! ---  " << throwdice_rad << std::endl;
 				if (throwdice_rad < probRad / probTot) {
-					int n_radiated = handleRadiation(p, qt, part_event, part_current);
+					int n_radiated = handleRadiation(p, qt, part_current);
 					n_newparticle += n_radiated;
 					if(n_radiated>1) std::cout << "something is wrong " << n_radiated << std::endl;
 				}
@@ -873,8 +934,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				part_event.insert(part_event.begin() + (i+1),  part_current.begin(), part_current.begin() + 1);
 
 				//2. Here, I would like to move !isActive at the end of part_event.
-				size_t i_ancester = i;
-				if (i < part_event.size() - 1) { // Only needed if not already at the end
+				if (i < (int)part_event.size() - 1) { // Only needed if not already at the end
 					std::rotate(part_event.begin() + i, part_event.begin() + i + 1, part_event.end());
 				} 
 

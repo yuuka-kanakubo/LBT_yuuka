@@ -20,6 +20,7 @@ namespace base{
 
     static constexpr double pi = 3.1415926;
     static constexpr double epsilon = 1e-6;
+    static constexpr double tol = 1e-10;
     static constexpr double CA = 3.0;
     static constexpr double CF = 4.0 / 3.0;
     static constexpr double sctr = 0.1973;  // fm to GeV^-1
@@ -183,7 +184,8 @@ inline double alphas0(const int Kalphas, const double T){
        {
                X=0.3;
        }else{
-               std::cout << "Currently Kalphas!=1 is not implemented." << std::endl;
+               X=0.3;
+               std::cout << "Currently Kalphas!=1 is not implemented. temperature " << T << " is not used."<< std::endl;
                std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
                exit(EXIT_FAILURE);
        }
