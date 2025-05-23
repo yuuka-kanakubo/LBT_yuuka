@@ -13,7 +13,7 @@ class LBTcl{
 	private:
 
 		int np_snapshot;
-		bool belowCutOff(const double Eloc, const Particle &p);
+		bool belowCutOff(const Particle &p);
 
 		LBTConfig& config;
 		double computeScatteringRate(Particle &p, const double PLen, const double T);

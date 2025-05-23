@@ -506,6 +506,9 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 			hydro_ctl = 0;
 		}
 
+std::cout << "hydro_ctl " << hydro_ctl << std::endl;
+std::cout << "temp " << temp << std::endl;
+
 		// If medium is alive
 		if (hydro_ctl == 0 && temp >= config.medium.hydro_Tc) {
 			p.Vfrozen[0] = ti;
@@ -526,6 +529,12 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 
 		//Caclutate some variables used to caluculate interaction rate, radiation rate etc.
 		p.get_timedilation();
+
+
+
+		if(belowCutOff(p)) free = 1;
+
+
 
 
 	} else {
@@ -578,19 +587,46 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 			fraction = 0.0;
 			free = 1;
 		}
+
+		p.get_timedilation();
+
+		if(belowCutOff(p)) free = 1;
+
 	}//tauswitch
 	return;
 }
 
 
-bool LBTcl::belowCutOff(const double Eloc, const Particle &p){
+bool LBTcl::belowCutOff(const Particle &p){
+
+	std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
+	std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+		std::cout << "vc0 " 
+			<< vc0[0] << "  " 
+			<< vc0[1] << "  " 
+			<< vc0[2] << "  " 
+			<< vc0[3] << "  " 
+			<< std::endl;
+		std::cout << "pc0 " 
+			<< pc0[0] << "  " 
+			<< pc0[1] << "  " 
+			<< pc0[2] << "  " 
+			<< pc0[3] << "  " 
+			<< std::endl;
+
+	this->trans(vc0, pc0);
+	double Eloc = pc0[0];
 
 	double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
 	double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);  // qhat_0: Calculated by  \mu_D^2 = 4\pi \alpha_s T^2
 	if(Eloc<sqrt(qhat0)) {
+		std::cout << "pc0[0] " << pc0[0] << std::endl;
+		std::cout << "sqrt(qhat) " << sqrt(qhat0) << std::endl;
 		return true;
 	}
-	if(Eloc<config.flow.Ecmcut) {
+		std::cout << "pc0[0] " << pc0[0] << std::endl;
+		std::cout << "Ecmcut " << config.flow.Ecmcut << std::endl;
+	if(Eloc<config.flow.Ecmcut && !p.isPrimary) {
 		return true;
 	}
 	return false;
@@ -668,7 +704,8 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				for(int j=0; j<(int)part_event.size(); j++){
 					if (part_event[j].index() == p.parent1 || part_event[j].index() == p.parent2){
 						if(part_event[j].isActive && part_event[j].CAT==3){
-							this->propagateParticle(part_event[j], ti, free, fraction);
+							int dummy=1;
+							this->propagateParticle(part_event[j], ti, dummy, fraction);
 							medpart = part_event[j].index();
 						}
 					}
@@ -692,9 +729,11 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "             P     " << p.P[0] << std::endl;
 		std::cout << "             V     " << p.V[0] << std::endl;
 		std::cout << "             V1     " << p.V[1] << std::endl;
+		std::cout << "             vcfrozen[1]   " << p.vcfrozen[1] << std::endl;
 		std::cout << "             CAT     " << p.CAT << std::endl;
 		std::cout << "             Tint     " << p.Tint_lrf << std::endl;
 		std::cout << "             radng     " << p.radng << std::endl;
+		std::cout << "             free     " << free << std::endl;
 
 		if (p.CAT != 1 && free == 0) {
 
@@ -703,8 +742,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 			std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
 			this->trans(vc0, pc0);
 			double Eloc = pc0[0];
-			//See if below cut off 
-			if(belowCutOff(Eloc,p)) continue;
 			double PLenloc = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
 			this->transback(vc0, pc0);
 
