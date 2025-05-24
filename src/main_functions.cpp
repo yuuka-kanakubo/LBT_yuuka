@@ -157,12 +157,6 @@ void readTables(LBTConfig &config) {
 		}
             }
 	}
-	std::cout << "t_gn " << config.hqrad.t_gn << std::endl;
-	std::cout << "temp_gn " << config.hqrad.temp_gn << std::endl;
-	std::cout << "HQener_gn " << config.hqrad.HQener_gn << std::endl;
-	std::cout << config.hqrad.dNg_over_dt_c[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_c[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
-	std::cout << config.hqrad.dNg_over_dt_q[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_q[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
-	std::cout << config.hqrad.dNg_over_dt_g[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << "    " << config.hqrad.max_dNgfnc_g[config.hqrad.t_gn+1][config.hqrad.temp_gn][config.hqrad.HQener_gn] << std::endl;
         f12.close();
         f13.close();
         f14.close();
@@ -179,6 +173,51 @@ void readTables(LBTConfig &config) {
             config.hqrad.max_dNgfnc_g[1][i][j] = 0.0;
         }
     }
+
+
+
+
+     std::ifstream fileB("b-tables/distB.dat");
+     if(!fileB.is_open()) {
+        std::cout << "Erro openning data file distB.dat!" << std::endl;
+     } else {
+        for(int i=0;i<config.hq22.N_T;i++) {
+           for(int j=0;j<config.hq22.N_p1;j++) {
+              double dummy_T,dummy_p1;
+              fileB>>dummy_T>>dummy_p1;
+              if(fabs(config.hq22.min_T+(0.5+i)*config.hq22.bin_T-dummy_T)>1.0e-5 || fabs(config.hq22.min_p1+(0.5+j)*config.hq22.bin_p1-dummy_p1)>1.0e-5) {
+                  std::cout << "Erro in reading data file distB.dat!" << std::endl;
+                  exit (EXIT_FAILURE);
+              }
+              fileB>>config.hq22.distFncBM[i][j];
+              for(int k=0;k<config.hq22.N_e2;k++) fileB>>config.hq22.distFncB[i][j][k];
+              for(int k=0;k<config.hq22.N_e2;k++) fileB>>config.hq22.distMaxB[i][j][k];
+           }
+        }
+     }
+     fileB.close();
+
+     std::ifstream fileF("b-tables/distF.dat");
+     if(!fileF.is_open()) {
+        std::cout << "Erro openning data file distF.dat!" << std::endl;
+     } else {
+        for(int i=0;i<config.hq22.N_T;i++) {
+           for(int j=0;j<config.hq22.N_p1;j++) {
+              double dummy_T,dummy_p1;
+              fileF>>dummy_T>>dummy_p1;
+              if(fabs(config.hq22.min_T+(0.5+i)*config.hq22.bin_T-dummy_T)>1.0e-5 || fabs(config.hq22.min_p1+(0.5+j)*config.hq22.bin_p1-dummy_p1)>1.0e-5) {
+                  std::cout << "Erro in reading data file distF.dat!" << std::endl;
+                  exit (EXIT_FAILURE);
+              }
+              fileF>>config.hq22.distFncFM[i][j];
+              for(int k=0;k<config.hq22.N_e2;k++) fileF>>config.hq22.distFncF[i][j][k];
+              for(int k=0;k<config.hq22.N_e2;k++) fileF>>config.hq22.distMaxF[i][j][k];
+           }
+        }
+     }
+     fileF.close();
+
+
 }
 
 

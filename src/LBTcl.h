@@ -419,6 +419,10 @@ class LBTcl{
 
 			double fBmax = config.hq22.distFncBM[idx_T][idx_P];
 			double fFmax = config.hq22.distFncFM[idx_T][idx_P];
+std::cout << "idx_P " << idx_P << std::endl;
+std::cout << "idx_T " << idx_T << std::endl;
+std::cout << "fBmax " << fBmax << std::endl;
+std::cout << "fFmax " << fFmax << std::endl;
 
 			for (int attempt = 0; attempt < 1e6; ++attempt) {
 				double xw = config.hq22.max_e2 * ran0(&config.rng.NUM1);
@@ -469,6 +473,7 @@ class LBTcl{
 			// Get momentum magnitude and temperature bin indices
 			double P = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3]);
 			double E1 = std::sqrt(P * P + HQmass2);  // correct heavy quark energy
+std::cout << "e1 " << E1 << std::endl;
 
 			for (int i = 0; i < 1e6; ++i) {
 				theta2 = base::pi * ran0(&config.rng.NUM1);
@@ -487,20 +492,32 @@ class LBTcl{
 				double t = -2.0 * e2 * e4 * (1.0 - cos24);
 				double u = 2.0 * HQmass * HQmass - s - t;
 
-				// kinematic cutoffs
-				if (s <= 2.0 * qhat0ud || t >= -qhat0ud || u >= -qhat0ud) continue;
-
+				double rank;
 				double msq = 0.0;
+				// kinematic cutoffs
+				if (s <= 2.0 * qhat0ud || t >= -qhat0ud || u >= -qhat0ud) {
+					rank=ran0(&config.rng.NUM1);
+					sigFactor=0.0;
+					msq=0.0;
+					continue;
+				}
+
 				if (channel == 11) {
 					ff = 1.0 / (std::exp(e2 / T) + 1.0) * (1.0 - 1.0 / (std::exp(e4 / T) + 1.0));
 					msq = Mqc2qc(s, t, HQmass);
 				} else if (channel == 12) {
 					ff = 1.0 / (std::exp(e2 / T) - 1.0) * (1.0 + 1.0 / (std::exp(e4 / T) - 1.0));
 					msq = Mgc2gc(s, t, HQmass);
+				} else {
+					std::cout 
+						<< "ERROR:  This function sampleThermalParton is called only within the collHQ22."
+						<< " Only channel =11 or 12 is allowed." 
+						<< std::endl;
+					exit(EXIT_FAILURE);
 				}
 
 				sigFactor *= ff;
-				double rank = ran0(&config.rng.NUM1);
+				rank = ran0(&config.rng.NUM1);
 				if (rank <= (msq / maxWeight) * sigFactor) {
 					return true;
 				}
@@ -852,9 +869,9 @@ class LBTcl{
 		void collHQ22(
 				int channel,
 				const Particle& p, // incoming particle
-				Particle& p_rec,  // output: recoiled thermal parton
-				Particle& p_med,  // output: initial thermal medium parton
-				Particle& p_fin, 
+				std::array<double, 4> &pc_rec,
+				std::array<double, 4> &pc_med,
+				std::array<double, 4> &pc_fin,
 				double &qt         // output: transverse momentum transfer
 			     ) {
 
@@ -862,13 +879,11 @@ class LBTcl{
 			//Momentum should be put back at the end of this function.
 			std::array<double, 4> pc_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
 			std::array<double, 4> v_fluid = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-			std::array<double, 4> pc_rec = {0., 0., 0., 0.};
-			std::array<double, 4> pc_med = {0., 0., 0., 0.};
-			std::array<double, 4> pc_fin = {0.,0.,0.,0.};
 
 			// Transform heavy quark to fluid rest frame
 			trans(v_fluid, pc_jet);
 
+			std::cout << "pc_jet(p0) " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
 
 			//Keep info
 			pc_fin = pc_jet;
@@ -880,6 +895,8 @@ class LBTcl{
 
 			double maxWeight, e2;
 			bool sampleOK = sampleThermalParton(channel, pc_jet, p.Tfrozen, maxWeight, e2);
+std::cout << "e2 " << e2 << std::endl;
+std::cout << "maxWeight " << maxWeight << std::endl;
 			if (!sampleOK) {
 				qt = 0.0;
 				pc_rec.fill(0.0);
@@ -897,6 +914,10 @@ class LBTcl{
 					channel, pc_jet, p.Tfrozen, e2, qhat0, maxWeight,
 					e4, theta2, theta4, phi24
 					);
+std::cout << "e4 " << e4 << std::endl;
+std::cout << "theta2 " << theta2 << std::endl;
+std::cout << "theta4 " << theta4 << std::endl;
+std::cout << "phi24 " << phi24 << std::endl;
 			if (!anglesOK) {
 				qt = 0.0;
 				pc_rec.fill(0.0);
@@ -941,18 +962,12 @@ class LBTcl{
 			transback(v_fluid, pc_jet);
 			transback(v_fluid, pc_fin);
 
-			for(int i=0; i<4; i++){
-				p_fin.V[i] = pc_fin[i];
-				p_rec.V[i] = pc_rec[i];
-				p_med.V[i] = pc_med[i];
-			}
-
 
 			std::cout << "pc_med(p3) " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
 			std::cout << "pc_rec(p2) " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
 			std::cout << "pc_fin(p0) " <<  pc_fin[0] << "  " << pc_fin[1] << "  " << pc_fin[2] << "  " << pc_fin[3] << std::endl;
+			return;
 
-exit(1);
 		}
 
 		bool collHQ23(const Particle &p, const double qt, 

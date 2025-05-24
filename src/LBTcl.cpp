@@ -145,10 +145,7 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
 	std::array<double, 4> pc_fin = {0.,0.,0.,0.};
 	if (channel == 11 || channel == 12) {
-		std::cout << "WARNING: collHQ22 is called. " << std::endl;
-		collHQ22(channel, p, p_rec, p_med, p_fin, qt);
-		std::cout << "ERROR: refactoring is not completed yet. " << std::endl;
-		exit(EXIT_FAILURE);
+		collHQ22(channel, p, pc_rec, pc_med, pc_fin, qt);
 	} else {
 		colljet22(channel, p, pc_rec, pc_med, pc_fin, qt);
 	}
