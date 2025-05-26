@@ -150,20 +150,21 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 		colljet22(channel, p, pc_rec, pc_med, pc_fin, qt);
 	}
 
+	for(int i=0; i<=3; i++){
+		p_fin.P[i] = pc_fin[i];
+		p_rec.P[i] = pc_rec[i];
+		p_med.P[i] = pc_med[i];
+	}
+	p_fin.pid = p.pid;
+	p_rec.pid = pid_rec;
+	p_med.pid = pid_med;
+
 	//I want to select parton with larger energy
 	//Then, put it to the original location of incoming jet.
 	//IN otiginal LBT, they are exchanging pc0 and pc2 and flavor0 flavor2.
-	if(pc_fin[0]>pc_rec[0]){
-		for(int i=0; i<=3; i++){
-			p_fin.P[i] = pc_fin[i];
-			p_rec.P[i] = pc_rec[i];
-			p_med.P[i] = pc_med[i];
-		}
-		p_fin.pid = p.pid;
-		p_rec.pid = pid_rec;
-		p_med.pid = pid_med;
-
-	}else{
+	//TODO: Why is this for p.pid!=4? Letter radiated gluons are sorted out when p.pid==21.
+	//What to do with quarks and anti-quarks?
+	if(pc_fin[0]<pc_rec[0] && (abs(p.pid) != 4 && pid_rec == p.pid)){
 		for(int i=0; i<=3; i++){
 			p_fin.P[i] = pc_rec[i];
 			p_rec.P[i] = pc_fin[i];
@@ -174,6 +175,9 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 		p_med.pid = pid_med;
 
 	}
+	//std::cout << "p0 " <<  p_fin.P[0] << "  " << p_fin.P[1] << "  " << p_fin.P[2] << "  " << p_fin.P[3] << std::endl;
+	//std::cout << "p2 " <<  p_rec.P[0] << "  " << p_rec.P[1] << "  " << p_rec.P[2] << "  " << p_rec.P[3] << std::endl;
+	//std::cout << "p3 " <<  p_med.P[0] << "  " << p_med.P[1] << "  " << p_med.P[2] << "  " << p_med.P[3] << std::endl;
 
 
 	//(De)Activate particles after collision
@@ -347,7 +351,6 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	int nrad = KPoisson(p.radng);
 
 
-
 	// Step 3: Process radiation if successful
 	//   if (icl23 != 1 && iclrad != 1) {
 
@@ -422,17 +425,18 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	std::array <double, 4> P_add_rad = {0.,0.,0.,0.};
 
 	// Step 4: Handle multiple gluons (Poisson) for HQ
+nrad = 1;//TODO TODO TEST!!!
 	while (--nrad > 0) {
 		//            double pc2_more[4] = {0.0};
 		//            double pc4_more[4] = {0.0};
 		//            double pb[4] = {0.0};
 		std::cout << "refactor not done for radiationHQ" << std::endl;
-		exit(1);
 		//
 		std::array <double, 4> pc_rad1 = {0.,0.,0.,0.};
 		std::array <double, 4> pc_rad2 = {0.,0.,0.,0.};
 		std::array <double, 4> pc_fin12 = {0.,0.,0.,0.};
 		bool successAdditional23 = radiationHQ(p, pc_rad, pc_fin, pc_rad1, pc_rad2, pc_fin12);
+		exit(1);
 		//radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
 		//          iclrad, Tdiff, Ejp);
 		//
@@ -553,9 +557,13 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		double VX, VY, VZ, ed, sd;
 		double &temp = (p.CAT!=5)? config.medium.temp0: config.medium.temp00; 
 		int hydro_ctl = 0;
-		if(zcar>tcar){
-			std::cout << "WARNING! z > t: " << zcar << " > " << tcar << std::endl;  
-			std::cout << "WARNING! z = t  is enforced. " << std::endl;  
+		if(p.CAT==3 && (zcar>tcar || xcar>tcar || ycar>tcar)){
+			//std::cout << "WARNING! x > t: " << xcar << " > " << tcar << std::endl;  
+			//std::cout << "WARNING! y > t: " << ycar << " > " << tcar << std::endl;  
+			//std::cout << "WARNING! z > t: " << zcar << " > " << tcar << std::endl;  
+			//std::cout << "WARNING! x_i = t  is enforced. " << std::endl;  
+			xcar = tcar;
+			ycar = tcar;
 			zcar = tcar;
 		}
 
@@ -921,9 +929,10 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				FinalTouch(p, part_current);
 
 				//TODO: This should be in principle done just after Radiation.
+				//TODO: Why is this only for leading gluon?
 				//More energetic parton should be Leading.
 				//When 2->2 and 2->3 (at least one radiation) happens
-				if(n_newparticle>=2) Sortingout_new_particles(part_current);
+				if(n_newparticle>=2 && p.pid==21) Sortingout_new_particles(part_current);
 
 
 				//Now event_current looks like [fin, med, rec, rad, rad1...]

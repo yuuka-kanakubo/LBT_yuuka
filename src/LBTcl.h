@@ -419,10 +419,6 @@ class LBTcl{
 
 			double fBmax = config.hq22.distFncBM[idx_T][idx_P];
 			double fFmax = config.hq22.distFncFM[idx_T][idx_P];
-std::cout << "idx_P " << idx_P << std::endl;
-std::cout << "idx_T " << idx_T << std::endl;
-std::cout << "fBmax " << fBmax << std::endl;
-std::cout << "fFmax " << fFmax << std::endl;
 
 			for (int attempt = 0; attempt < 1e6; ++attempt) {
 				double xw = config.hq22.max_e2 * ran0(&config.rng.NUM1);
@@ -473,7 +469,6 @@ std::cout << "fFmax " << fFmax << std::endl;
 			// Get momentum magnitude and temperature bin indices
 			double P = std::sqrt(pc_jet[1]*pc_jet[1] + pc_jet[2]*pc_jet[2] + pc_jet[3]*pc_jet[3]);
 			double E1 = std::sqrt(P * P + HQmass2);  // correct heavy quark energy
-std::cout << "e1 " << E1 << std::endl;
 
 			for (int i = 0; i < 1e6; ++i) {
 				theta2 = base::pi * ran0(&config.rng.NUM1);
@@ -620,14 +615,18 @@ std::cout << "e1 " << E1 << std::endl;
 
 		double Mqqbar2qqbar_same_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
 			double mmax = 4.0 / (ss * ss) * (
-					(4.0 / 9.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / std::pow(tmin, 2)
-					+ (std::pow(ss, 2) + std::pow(tmin, 2)) / std::pow((ss - tmin), 2)
-					- (2.0 / 3.0) * std::pow(ss, 2) / (tmin * (ss - tmin))
+					(4.0 / 9.0) * (std::pow(ss, 2) + std::pow(ss - tmin, 2)) / std::pow(tmin, 2)
+					+ (std::pow(tmin, 2) + std::pow(ss - tmin, 2)) / std::pow(ss, 2)
+					+ (2.0 / 3.0) * std::pow(ss - tmin, 2) / (ss * tmin)
 					);
-			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
-				((4.0 / 9.0) * ((std::pow(ss, 2) + std::pow(uu, 2)) / std::pow(tt, 2)
-					+ (std::pow(ss, 2) + std::pow(tt, 2)) / std::pow(uu, 2))
-				 - (2.0 / 3.0) * std::pow(ss, 2) / (tt * uu)) / mmax;
+
+			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) * (
+					(4.0 / 9.0) * (
+						(std::pow(ss, 2) + std::pow(uu, 2)) / std::pow(tt, 2)
+						+ (std::pow(tt, 2) + std::pow(uu, 2)) / std::pow(ss, 2)
+						+ (2.0 / 3.0) * std::pow(uu, 2) / (ss * tt)
+						)
+					) / mmax;
 			return msq;
 		}
 
@@ -635,12 +634,14 @@ std::cout << "e1 " << E1 << std::endl;
 
 		double Mqqbar2gg_approx(double ss, double tt, double uu, double tmin, double p0E, double p2E) {
 			double mmax = 4.0 / (ss * ss) * (
-					(32.0 / 27.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / (tmin * (ss - tmin))
-					- (8.0 / 3.0) * (std::pow(ss, 2) + std::pow((ss - tmin), 2)) / std::pow(ss, 2)
+					(4.0 / 9.0) * (std::pow(tmin, 2) + std::pow(ss - tmin, 2)) / (tmin * (ss - tmin))
+					- (std::pow(tmin, 2) + std::pow(ss - tmin, 2)) / (ss * ss)
 					);
+
 			double msq = std::pow(1.0 / (2.0 * p0E * p2E), 2) *
-				((32.0 / 27.0) * (std::pow(tt, 2) + std::pow(uu, 2)) / (tt * uu)
-				 - (8.0 / 3.0) * (std::pow(tt, 2) + std::pow(uu, 2)) / std::pow(ss, 2)) / mmax;
+				((4.0 / 9.0) * (std::pow(tt, 2) + std::pow(uu, 2)) / (tt * uu)
+				 - (std::pow(tt, 2) + std::pow(uu, 2)) / (ss * ss)
+				) / (mmax + 4.0);
 			return msq;
 		}
 
@@ -752,6 +753,10 @@ std::cout << "e1 " << E1 << std::endl;
 					//Randomly sample t from [0, s]
 					double r_ = ran0(&config.rng.NUM1);
 					t = r_ * s;
+					//if(nloop<100){
+					//	std::cout << "s " << std::setw(15) << std::setprecision(10) << s << std::endl;
+					//	std::cout << "t " << std::setw(15) << std::setprecision(10) << t << std::endl;
+					//}
 
 					if ((t >= qhat0ud) && (t <= (s - qhat0ud))){
 						//Accepted!
@@ -771,6 +776,9 @@ std::cout << "e1 " << E1 << std::endl;
 				// Matrix element
 				double msq = computeMatrixElement(channel, s, t, u, tmin, tmax, pc_jet[0], pc_med[0]);
 				double ff = getFinalStateStatFactor(channel, f1, f2);
+				//std::cout << "channel " << channel << std::endl;
+				//std::cout << "msq " << std::setw(15) << std::setprecision(10) << msq << std::endl;
+				//std::cout << "ff " << std::setw(15) << std::setprecision(10) << ff << std::endl;
 
 				double accept = msq * ff;
 				if (ran0(&config.rng.NUM1) <= accept) {
@@ -807,9 +815,6 @@ std::cout << "e1 " << E1 << std::endl;
 			transback(v_fluid, pc_med);
 			transback(v_fluid, pc_fin);
 			transback(v_fluid, pc_jet);
-			//std::cout << "pc_rec " <<  pc_rec[0] << "  " << pc_rec[1] << "  " << pc_rec[2] << "  " << pc_rec[3] << std::endl;
-			//std::cout << "pc_med " <<  pc_med[0] << "  " << pc_med[1] << "  " << pc_med[2] << "  " << pc_med[3] << std::endl;
-
 
 
 			return;
@@ -895,8 +900,6 @@ std::cout << "e1 " << E1 << std::endl;
 
 			double maxWeight, e2;
 			bool sampleOK = sampleThermalParton(channel, pc_jet, p.Tfrozen, maxWeight, e2);
-std::cout << "e2 " << e2 << std::endl;
-std::cout << "maxWeight " << maxWeight << std::endl;
 			if (!sampleOK) {
 				qt = 0.0;
 				pc_rec.fill(0.0);
@@ -914,10 +917,6 @@ std::cout << "maxWeight " << maxWeight << std::endl;
 					channel, pc_jet, p.Tfrozen, e2, qhat0, maxWeight,
 					e4, theta2, theta4, phi24
 					);
-std::cout << "e4 " << e4 << std::endl;
-std::cout << "theta2 " << theta2 << std::endl;
-std::cout << "theta4 " << theta4 << std::endl;
-std::cout << "phi24 " << phi24 << std::endl;
 			if (!anglesOK) {
 				qt = 0.0;
 				pc_rec.fill(0.0);
