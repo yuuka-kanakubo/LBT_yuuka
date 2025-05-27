@@ -111,8 +111,20 @@ class LBTcl{
 		}
 
 
-		void lam2(const int flavour,double &RTE1, double &RTE2,const double T,double &T1,double &T2,int &iT1,int &iT2,int &iE1,int &iE2){   
-			// --- Step 2: Interpolate in Temperature first ---
+		double lam2(const int flavour, const double E, const double T){   
+			double dtemp=0.02;
+			int iT1=(int)((T-0.1)/dtemp);
+			int iT2=iT1+1;
+			int iE1=(int)(log(E)+2);
+			if(iE1<1) iE1=1;
+			int iE2=iE1+1;
+
+			double T1=0.12+(iT1-1)*0.02;
+			double T2=T1+dtemp;
+			double E1=exp(iE1-2.0);
+			double E2=exp(iE2-2.0);
+
+			double RTE1, RTE2;
 			if (flavour == 21) {
 				// Gluon
 				RTE1 = (config.tables.qhatG[iT2][iE1] - config.tables.qhatG[iT1][iE1]) * (T - T1) / (T2 - T1) + config.tables.qhatG[iT1][iE1];
@@ -126,38 +138,37 @@ class LBTcl{
 				RTE1 = (config.tables.qhatLQ[iT2][iE1] - config.tables.qhatLQ[iT1][iE1]) * (T - T1) / (T2 - T1) + config.tables.qhatLQ[iT1][iE1];
 				RTE2 = (config.tables.qhatLQ[iT2][iE2] - config.tables.qhatLQ[iT1][iE2]) * (T - T1) / (T2 - T1) + config.tables.qhatLQ[iT1][iE2];
 			}
-			return;
+
+			return (RTE2 - RTE1) * (E - E1) / (E2 - E1) + RTE1;
 		}
 
-		void lam(const int flavour,double &RTE,const double E,const double T,double &T1,double &T2,double &E1,double &E2,int &iT1,int &iT2,int &iE1,int &iE2){   
+		double lam(const int flavour,const double E,const double T){   
 
 			double dtemp=0.02;
-			iT1=(int)((T-0.1)/dtemp);
-			iT2=iT1+1;
-			iE1=(int)(log(E)+2);
+			int iT1=(int)((T-0.1)/dtemp);
+			int iT2=iT1+1;
+			int iE1=(int)(log(E)+2);
 			if(iE1<1) iE1=1;
-			iE2=iE1+1;
+			int iE2=iE1+1;
 
-			T1=0.12+(iT1-1)*0.02;
-			T2=T1+dtemp;
-			E1=exp(iE1-2.0);
-			E2=exp(iE2-2.0);
+			double T1=0.12+(iT1-1)*0.02;
+			double T2=T1+dtemp;
+			double E1=exp(iE1-2.0);
+			double E2=exp(iE2-2.0);
 
+			double RTE1, RTE2;
 			if(flavour==21) {	
-				double RTE1=(config.tables.Rg[iT2][iE1]-config.tables.Rg[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.Rg[iT1][iE1];
-				double RTE2=(config.tables.Rg[iT2][iE2]-config.tables.Rg[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.Rg[iT1][iE2];
-				RTE=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;	   
+				RTE1=(config.tables.Rg[iT2][iE1]-config.tables.Rg[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.Rg[iT1][iE1];
+				RTE2=(config.tables.Rg[iT2][iE2]-config.tables.Rg[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.Rg[iT1][iE2];
 			} else if (flavour==4||flavour==-4) { // add heavy quark channel
-				double RTE1=(config.tables.RHQ[iT2][iE1]-config.tables.RHQ[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.RHQ[iT1][iE1];
-				double RTE2=(config.tables.RHQ[iT2][iE2]-config.tables.RHQ[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.RHQ[iT1][iE2];
-				RTE=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;	   
+				RTE1=(config.tables.RHQ[iT2][iE1]-config.tables.RHQ[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.RHQ[iT1][iE1];
+				RTE2=(config.tables.RHQ[iT2][iE2]-config.tables.RHQ[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.RHQ[iT1][iE2];
 			} else {    
-				double RTE1=(config.tables.Rq[iT2][iE1]-config.tables.Rq[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.Rq[iT1][iE1];
-				double RTE2=(config.tables.Rq[iT2][iE2]-config.tables.Rq[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.Rq[iT1][iE2];
-				RTE=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;
+				RTE1=(config.tables.Rq[iT2][iE1]-config.tables.Rq[iT1][iE1])*(T-T1)/(T2-T1)+config.tables.Rq[iT1][iE1];
+				RTE2=(config.tables.Rq[iT2][iE2]-config.tables.Rq[iT1][iE2])*(T-T1)/(T2-T1)+config.tables.Rq[iT1][iE2];
 			}
 
-			return;
+			return (RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;
 		}
 
 

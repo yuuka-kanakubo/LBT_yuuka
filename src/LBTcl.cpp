@@ -14,22 +14,18 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 	// Interpolate based on PLen(E), T
 	// Return RTE (rate)
 
-	// --- Step 1: Find interpolation points ---
-	double T1, T2, E1, E2;
-	int iT1, iT2, iE1, iE2;
 
 	// Assuming lam() is available (sets T1, T2, E1, E2 and index iT1, iT2, iE1, iE2)
 	int flavor = p.pid;
-	lam(flavor, p.tot_el_rate, PLen_in, T_in, T1, T2, E1, E2, iT1, iT2, iE1, iE2);
-	//Assuming lam returned T1, T2, E1, E2, iT1, iT2, iE1, iE2.
-	//They will be used in lam2 to get RTE1 and RTE2.
 
-	// --- Step 2: Interpolate in temperature (T_in) ---
-	double RTE1, RTE2;
-	lam2(flavor, RTE1, RTE2, T_in, T1, T2, iT1, iT2, iE1, iE2);
+	//Obtain Gamma_el (p.tot_el_rate) from table
+	//as functions of T and E.
+	p.tot_el_rate = lam(flavor, PLen_in, T_in);
 
-	// --- Step 3: Interpolate in Energy (PLen) ---
-	double qhat_over_T3 = (RTE2 - RTE1) * (PLen_in - E1) / (E2 - E1) + RTE1;
+	//Obtain qhat(s) from table
+	//as functions of T and E.
+	double qhat_over_T3 = lam2(flavor, PLen_in, T_in);
+
 
 	// --- Step 4: Apply K-factors ---
 	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
@@ -51,8 +47,10 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 double LBTcl::computeRadiationProbability(Particle &p, const double T, const double E) {
 	//Calculate the probability that a radiation event happens for the current particle over time dt_lrf.
 	//Use radng[i] from the original code, which tracks average number of gluons radiated.
-	//Need to use heavy quark or light parton radiation tables, e.g., nHQgluon().
-	// Return probability
+	//P_inel* in P_tot = P_el* + P_inel*
+        //p.radng: <Delta N_inel> the average number of elastic and inelastic scatterings during the time interval.
+	//p.radng = Gamma_inel * delta t
+	//nHQgluon returns <Delta N_inel> = z-integrated radiation rate.
 
 	// --- Inputs: particle p, local temperature T, energy E ---
 
@@ -99,8 +97,12 @@ double LBTcl::computeCollisionProbability(
 		const double probRad
 		) {
 
+	//Compute probability of having ONLY elastic collisions.
+	//P_el* in P_tot = P_el* + P_inel* = P_el(1-P_inel) + P_inel
+	//probRad: P_inel
+
 	double dt_lrf = config.clock.dt*p.timedilation;
-	double probCol = (config.clock.tauswitch==0)? fraction*dt_lrf*p.tot_el_rate/base::GEVFM: dt_lrf*p.tot_el_rate*p.Xtau_keep/base::GEVFM;
+	double probCol = (config.clock.tauswitch==0)? fraction*dt_lrf*p.tot_el_rate/base::GEVFM : dt_lrf*p.tot_el_rate*p.Xtau_keep/base::GEVFM;
 
 	//Modify vertices to take into account time-ordering collisions
 	if(config.clock.tauswitch==0) p.V[0]=p.V[0]-fraction*config.clock.dt*p.tot_el_rate/base::GEVFM*sqrt( pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2) )/p.P[0];
