@@ -15,3 +15,11 @@ make
 mv src/LBT ../
 cd ..
 ```
+
+
+- Run unit test (more to be added)
+```
+cd src/test
+./RunTest.sh
+```
+

@@ -23,19 +23,17 @@ void test_energy_momentum_conservation_collHQ22() {
     p.pid = 4;
     p.vcfrozen[1] = 0.0; p.vcfrozen[2] = 0.0; p.vcfrozen[3] = 0.0;
 
-    Particle p_rec, p_med, p_fin;
     double qt = 0.0;
 
     LBTConfig config;  // Ensure tables and parameters are properly initialized in production
     LBTcl lbt(config);
     int channel = 11;
 
-    lbt.collHQ22(channel, p, p_rec, p_med, p_fin, qt);
-
     std::array<double, 4> p_jet = {p.P[0], p.P[1], p.P[2], p.P[3]};
-    std::array<double, 4> pc_med = {p_med.V[0], p_med.V[1], p_med.V[2], p_med.V[3]};
-    std::array<double, 4> pc_rec = {p_rec.V[0], p_rec.V[1], p_rec.V[2], p_rec.V[3]};
-    std::array<double, 4> pc_fin = {p_fin.P[0], p_fin.P[1], p_fin.P[2], p_fin.P[3]};
+    std::array<double, 4> pc_med ={0.,0.,0.,0.}; 
+    std::array<double, 4> pc_rec = {0.,0.,0.,0.}; 
+    std::array<double, 4> pc_fin ={0.,0.,0.,0.}; 
+    lbt.collHQ22(channel, p, pc_rec, pc_med, pc_fin, qt);
 
     if (!checkEnergyMomentumConservation(p_jet, pc_med, pc_fin, pc_rec)) {
         std::cerr << "[Test Failed] Energy-momentum not conserved in collHQ22" << std::endl;
