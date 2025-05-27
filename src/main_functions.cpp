@@ -307,6 +307,76 @@ void open_output(int argc, char* argv[],
 		}
 	}
 
+	//Headers
+	if(heavyOut && outHQ.is_open()){
+
+		outHQ << "# Heavy quark output ----" << std::endl;
+		outHQ << "#"
+			<< std::setw(5)  << "i"
+			<< std::setw(5)  << "index"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "pid"
+			<< std::setw(15) << "mass"
+			<< std::setw(15) << "e"
+			<< std::setw(15) << "px"
+			<< std::setw(15) << "py"
+			<< std::setw(15) << "pz"
+			<< std::setw(15) << "rap"
+			<< std::setw(15) << "x"
+			<< std::setw(15) << "y"
+			<< std::setw(15) << "z"
+			<< std::setw(15) << "t"
+			<< std::setw(15) << "ft(=t)"
+			<< std::setw(5) << "CAT"
+			<< std::endl;
+	}
+	if(lightOut && outLightPos.is_open()){
+		outLightPos << "# Positive partons output ----" << std::endl;
+		outLightPos << "#"
+			<< std::setw(5)  << "i"
+			<< std::setw(5)  << "index"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "pid"
+			<< std::setw(15) << "mass"
+			<< std::setw(15) << "e"
+			<< std::setw(15) << "px"
+			<< std::setw(15) << "py"
+			<< std::setw(15) << "pz"
+			<< std::setw(15) << "rap"
+			<< std::setw(15) << "x"
+			<< std::setw(15) << "y"
+			<< std::setw(15) << "z"
+			<< std::setw(15) << "t"
+			<< std::setw(15) << "ft(=t)"
+			<< std::setw(5) << "CAT"
+			<< std::endl;
+	}
+	if(lightOut && outLightNeg.is_open()){
+
+		outLightNeg << "# Negative partons output ----" << std::endl;
+		outLightNeg << "#"
+			<< std::setw(5)  << "i"
+			<< std::setw(5)  << "index"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "dmy"
+			<< std::setw(5)  << "pid"
+			<< std::setw(15) << "mass"
+			<< std::setw(15) << "e"
+			<< std::setw(15) << "px"
+			<< std::setw(15) << "py"
+			<< std::setw(15) << "pz"
+			<< std::setw(15) << "rap"
+			<< std::setw(15) << "x"
+			<< std::setw(15) << "y"
+			<< std::setw(15) << "z"
+			<< std::setw(15) << "t"
+			<< std::setw(15) << "ft(=t)"
+			<< std::setw(5) << "CAT"
+			<< std::endl;
+	}
+
 	// Optional: check if file streams are valid
 	if ((heavyOut && !outHQ) ||
 			(lightOut && (!outLightPos || !outLightNeg))) {
@@ -439,7 +509,7 @@ void runLBT(std::ifstream& fpList,
 		// TODO: Output logic and energy accounting can be separated later
 
 
-                writeout(n, outHQ, outLightPos, outLightNeg, partons_event);
+                writeout(n, outHQ, outLightPos, outLightNeg, config, partons_event);
 
 		std::vector<Particle>().swap(partons_event);
 		if((int) partons_event.size()>0){
@@ -465,66 +535,104 @@ return rap;
 
 void writeout(const int n, std::ofstream& outHQ,
 		std::ofstream& outLightPos,
-		std::ofstream& outLightNeg,
+		std::ofstream& outLightNeg, const LBTConfig config,
 		const std::vector<Particle> part_event){
+
+	const int heavyOut = config.output.heavyOut;
+	const int lightOut = config.output.lightOut;
 
 	int col=0;
 	int acol=0;
 	double mass=0.0;
-	for(int i = 0; i<(int)part_event.size(); i++){
+	if(heavyOut){
+		for(int i = 0; i<(int)part_event.size(); i++){
 
-		const Particle &p = part_event[i];
+			const Particle &p = part_event[i];
 
-		if(p.CAT!=3)
-			outLightPos 
-				<< std::setw(5) << i
-				<< std::setw(5) << p.index()
-				<< std::setw(5) << col//col and acols: dummy
-				<< std::setw(5) << acol//col and acols: dummy
-				<< std::setw(5) << p.pid
-				<< std::setw(15) << std::setprecision(10) << mass
-				<< std::setw(15) << std::setprecision(10) << p.P[0]
-				<< std::setw(15) << std::setprecision(10) << p.P[1]
-				<< std::setw(15) << std::setprecision(10) << p.P[2]
-				<< std::setw(15) << std::setprecision(10) << p.P[3]
-				<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
-				<< std::setw(15) << std::setprecision(10) << p.V[1]
-				<< std::setw(15) << std::setprecision(10) << p.V[2]
-				<< std::setw(15) << std::setprecision(10) << p.V[3]
-				<< std::setw(15) << std::setprecision(10) << p.V[0]
-				<< std::setw(15) << std::setprecision(10) << p.V[0]
-				<< std::setw(5) << p.CAT
-				<< std::endl;
+			if(p.CAT==4 && p.isActive)
+				outHQ 
+					<< std::setw(5) << i
+					<< std::setw(5) << p.index()
+					<< std::setw(5) << col//col and acols: dummy
+					<< std::setw(5) << acol//col and acols: dummy
+					<< std::setw(5) << p.pid
+					<< std::setw(15) << std::setprecision(10) << mass
+					<< std::setw(15) << std::setprecision(10) << p.P[0]
+					<< std::setw(15) << std::setprecision(10) << p.P[1]
+					<< std::setw(15) << std::setprecision(10) << p.P[2]
+					<< std::setw(15) << std::setprecision(10) << p.P[3]
+					<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
+					<< std::setw(15) << std::setprecision(10) << p.V[1]
+					<< std::setw(15) << std::setprecision(10) << p.V[2]
+					<< std::setw(15) << std::setprecision(10) << p.V[3]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(5) << p.CAT
+					<< std::endl;
+		}
 	}
-	for(int i = 0; i<(int)part_event.size(); i++){
+	if(lightOut){
+		for(int i = 0; i<(int)part_event.size(); i++){
 
-		const Particle &p = part_event[i];
+			const Particle &p = part_event[i];
 
-		if(p.CAT==3)
-			outLightNeg 
-				<< std::setw(5) << i
-				<< std::setw(5) << p.index()
-				<< std::setw(5) << col//col and acols: dummy
-				<< std::setw(5) << acol//col and acols: dummy
-				<< std::setw(5) << p.pid
-				<< std::setw(15) << std::setprecision(10) << mass
-				<< std::setw(15) << std::setprecision(10) << p.P[0]
-				<< std::setw(15) << std::setprecision(10) << p.P[1]
-				<< std::setw(15) << std::setprecision(10) << p.P[2]
-				<< std::setw(15) << std::setprecision(10) << p.P[3]
-				<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
-				<< std::setw(15) << std::setprecision(10) << p.V[1]
-				<< std::setw(15) << std::setprecision(10) << p.V[2]
-				<< std::setw(15) << std::setprecision(10) << p.V[3]
-				<< std::setw(15) << std::setprecision(10) << p.V[0]
-				<< std::setw(15) << std::setprecision(10) << p.V[0]
-				<< std::setw(5) << p.CAT
-				<< std::endl;
+			if(p.CAT!=3 && p.isActive)
+				outLightPos 
+					<< std::setw(5) << i
+					<< std::setw(5) << p.index()
+					<< std::setw(5) << col//col and acols: dummy
+					<< std::setw(5) << acol//col and acols: dummy
+					<< std::setw(5) << p.pid
+					<< std::setw(15) << std::setprecision(10) << mass
+					<< std::setw(15) << std::setprecision(10) << p.P[0]
+					<< std::setw(15) << std::setprecision(10) << p.P[1]
+					<< std::setw(15) << std::setprecision(10) << p.P[2]
+					<< std::setw(15) << std::setprecision(10) << p.P[3]
+					<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
+					<< std::setw(15) << std::setprecision(10) << p.V[1]
+					<< std::setw(15) << std::setprecision(10) << p.V[2]
+					<< std::setw(15) << std::setprecision(10) << p.V[3]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(5) << p.CAT
+					<< std::endl;
+		}
+		for(int i = 0; i<(int)part_event.size(); i++){
+
+			const Particle &p = part_event[i];
+
+			if(p.CAT==3&& p.isActive)
+				outLightNeg 
+					<< std::setw(5) << i
+					<< std::setw(5) << p.index()
+					<< std::setw(5) << col//col and acols: dummy
+					<< std::setw(5) << acol//col and acols: dummy
+					<< std::setw(5) << p.pid
+					<< std::setw(15) << std::setprecision(10) << mass
+					<< std::setw(15) << std::setprecision(10) << p.P[0]
+					<< std::setw(15) << std::setprecision(10) << p.P[1]
+					<< std::setw(15) << std::setprecision(10) << p.P[2]
+					<< std::setw(15) << std::setprecision(10) << p.P[3]
+					<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
+					<< std::setw(15) << std::setprecision(10) << p.V[1]
+					<< std::setw(15) << std::setprecision(10) << p.V[2]
+					<< std::setw(15) << std::setprecision(10) << p.V[3]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(15) << std::setprecision(10) << p.V[0]
+					<< std::setw(5) << p.CAT
+					<< std::endl;
+		}
 	}
 
-	outLightPos << "%" << std::setw(5) << n << std::endl;
-	outLightNeg << "%" << std::setw(5) << n << std::endl;
-};
+	if(heavyOut){
+		outHQ << "%" << std::setw(5) << n << std::endl;
+	}
+	if(lightOut){
+		outLightPos << "%" << std::setw(5) << n << std::endl;
+		outLightNeg << "%" << std::setw(5) << n << std::endl;
+	}
+return;
+}
 
 
 

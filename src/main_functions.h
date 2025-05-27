@@ -22,7 +22,7 @@ void runLBT(std::ifstream& fpList,
 		std::ofstream& outLightNeg);
 void writeout(const int n, std::ofstream& outHQ,
 		std::ofstream& outLightPos,
-		std::ofstream& outLightNeg,
+		std::ofstream& outLightNeg, const LBTConfig config,
 		const std::vector<Particle> part_event);
 void finalize(std::ofstream& outHQ,
 		std::ofstream& outLightPos,
