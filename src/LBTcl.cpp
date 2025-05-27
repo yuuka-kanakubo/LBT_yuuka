@@ -351,6 +351,8 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	int nrad = KPoisson(p.radng);
 
 
+
+
 	// Step 3: Process radiation if successful
 	//   if (icl23 != 1 && iclrad != 1) {
 
@@ -425,7 +427,7 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	std::array <double, 4> P_add_rad = {0.,0.,0.,0.};
 
 	// Step 4: Handle multiple gluons (Poisson) for HQ
-nrad = 1;//TODO TODO TEST!!!
+
 	while (--nrad > 0) {
 		//            double pc2_more[4] = {0.0};
 		//            double pc4_more[4] = {0.0};

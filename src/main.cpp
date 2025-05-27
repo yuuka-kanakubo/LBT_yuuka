@@ -20,9 +20,8 @@ int main(int argc, char* argv[]) {
 	std::ofstream outHQ, outLightPos, outLightNeg;
 	open_output(argc, argv, config, fpList, outHQ, outLightPos, outLightNeg);
 
-	runLBT(fpList, config);
+	runLBT(fpList, config, outHQ, outLightPos, outLightNeg);
 
-	writeout(outHQ, outLightPos, outLightNeg);
 	finalize(outHQ, outLightPos, outLightNeg, config, time_start);
 
 	std::cout << "SUCCESSFULLY FINISHED LBT RUN! :)" << std::endl;

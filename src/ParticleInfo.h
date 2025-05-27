@@ -180,7 +180,7 @@ struct Particle {
                 index_counter ++;
 	}
 
-        int index(){return this->index_;}
+        int index() const{return this->index_;}
 
 	private:
 	int index_ = -1;  // Unique ID for this particle in the vector

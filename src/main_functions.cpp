@@ -343,7 +343,11 @@ void get_set_ready(std::vector <Particle>& part_event, LBTConfig& config){
 
 
 void runLBT(std::ifstream& fpList,
-		LBTConfig& config) {
+		LBTConfig& config,
+		std::ofstream& outHQ,
+		std::ofstream& outLightPos,
+		std::ofstream& outLightNeg
+	   ) {
 
 	int& nj = config.jet.nj;
 	int& np = config.jet.np;
@@ -434,19 +438,93 @@ void runLBT(std::ifstream& fpList,
 
 		// TODO: Output logic and energy accounting can be separated later
 
+
+                writeout(n, outHQ, outLightPos, outLightNeg, partons_event);
+
 		std::vector<Particle>().swap(partons_event);
 		if((int) partons_event.size()>0){
 			std::cout << "ERROR !!!!" << std::endl;
 			exit(1);
 		}
+
 	}//Event loop
+
+return;
 }
 
 
+double get_rapidity(const double E, const double pz){
+	const double LARGE = 10.0;
+	double rap;
+	if(E==0.0 && pz==0.0) rap=0.0;
+	else if(E==-pz) rap=-LARGE;
+	else if(E==pz) rap=LARGE;
+	else rap=std::log((E + pz)/(E - pz)) / 2.0;
+return rap;
+}
 
-void writeout(std::ofstream& outHQ,
+void writeout(const int n, std::ofstream& outHQ,
 		std::ofstream& outLightPos,
-		std::ofstream& outLightNeg){};
+		std::ofstream& outLightNeg,
+		const std::vector<Particle> part_event){
+
+	int col=0;
+	int acol=0;
+	double mass=0.0;
+	for(int i = 0; i<(int)part_event.size(); i++){
+
+		const Particle &p = part_event[i];
+
+		if(p.CAT!=3)
+			outLightPos 
+				<< std::setw(5) << i
+				<< std::setw(5) << p.index()
+				<< std::setw(5) << col//col and acols: dummy
+				<< std::setw(5) << acol//col and acols: dummy
+				<< std::setw(5) << p.pid
+				<< std::setw(15) << std::setprecision(10) << mass
+				<< std::setw(15) << std::setprecision(10) << p.P[0]
+				<< std::setw(15) << std::setprecision(10) << p.P[1]
+				<< std::setw(15) << std::setprecision(10) << p.P[2]
+				<< std::setw(15) << std::setprecision(10) << p.P[3]
+				<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
+				<< std::setw(15) << std::setprecision(10) << p.V[1]
+				<< std::setw(15) << std::setprecision(10) << p.V[2]
+				<< std::setw(15) << std::setprecision(10) << p.V[3]
+				<< std::setw(15) << std::setprecision(10) << p.V[0]
+				<< std::setw(15) << std::setprecision(10) << p.V[0]
+				<< std::setw(5) << p.CAT
+				<< std::endl;
+	}
+	for(int i = 0; i<(int)part_event.size(); i++){
+
+		const Particle &p = part_event[i];
+
+		if(p.CAT==3)
+			outLightNeg 
+				<< std::setw(5) << i
+				<< std::setw(5) << p.index()
+				<< std::setw(5) << col//col and acols: dummy
+				<< std::setw(5) << acol//col and acols: dummy
+				<< std::setw(5) << p.pid
+				<< std::setw(15) << std::setprecision(10) << mass
+				<< std::setw(15) << std::setprecision(10) << p.P[0]
+				<< std::setw(15) << std::setprecision(10) << p.P[1]
+				<< std::setw(15) << std::setprecision(10) << p.P[2]
+				<< std::setw(15) << std::setprecision(10) << p.P[3]
+				<< std::setw(15) << std::setprecision(10) << get_rapidity(p.P[0], p.P[3])
+				<< std::setw(15) << std::setprecision(10) << p.V[1]
+				<< std::setw(15) << std::setprecision(10) << p.V[2]
+				<< std::setw(15) << std::setprecision(10) << p.V[3]
+				<< std::setw(15) << std::setprecision(10) << p.V[0]
+				<< std::setw(15) << std::setprecision(10) << p.V[0]
+				<< std::setw(5) << p.CAT
+				<< std::endl;
+	}
+
+	outLightPos << "%" << std::setw(5) << n << std::endl;
+	outLightNeg << "%" << std::setw(5) << n << std::endl;
+};
 
 
 

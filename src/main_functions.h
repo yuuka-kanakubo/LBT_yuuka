@@ -16,12 +16,17 @@ void open_output(int argc, char* argv[],
 		std::ofstream& outLightPos,
 		std::ofstream& outLightNeg);
 void runLBT(std::ifstream& fpList,
-		LBTConfig& config);
-void writeout(std::ofstream& outHQ,
+		LBTConfig& config,
+		std::ofstream& outHQ,
 		std::ofstream& outLightPos,
 		std::ofstream& outLightNeg);
+void writeout(const int n, std::ofstream& outHQ,
+		std::ofstream& outLightPos,
+		std::ofstream& outLightNeg,
+		const std::vector<Particle> part_event);
 void finalize(std::ofstream& outHQ,
 		std::ofstream& outLightPos,
 		std::ofstream& outLightNeg,
 		const LBTConfig& config,
 		std::time_t time_start);
+double get_rapidity(const double E, const double pz);
