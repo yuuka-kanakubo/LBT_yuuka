@@ -30,3 +30,4 @@ void finalize(std::ofstream& outHQ,
 		const LBTConfig& config,
 		std::time_t time_start);
 double get_rapidity(const double E, const double pz);
+void readTables(LBTConfig &config);

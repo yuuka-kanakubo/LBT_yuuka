@@ -177,7 +177,7 @@ class LBTcl{
 
 
 
-		double nHQgluon(Particle &p, const double dtLRF,
+		double nHQgluon(Particle &p, 
 				const double temp_med_,const double HQenergy_){
 			// gluon radiation probability for heavy quark       
 			int flavour = p.pid;
@@ -260,7 +260,7 @@ class LBTcl{
 
 
 
-			delta_Ng*=6.0/p.D2piT*dtLRF;
+			delta_Ng*=6.0/p.D2piT;
 			max_Ng*=6.0/p.D2piT;
 			p.max_Ng = max_Ng;
 			p.Tint_lrf = time_gluon;

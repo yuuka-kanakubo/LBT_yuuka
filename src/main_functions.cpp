@@ -46,21 +46,21 @@ int read_xyMC(LBTConfig &config) {
 
 
 
-void readTables(LBTConfig &config) {
+void readTables(const std::string w_path, LBTConfig &config) {
     // Read hydro profile depending on bulkFlag
     if (config.medium.bulkFlag == 1) {
-        int dataID_in = 1;
-        char dataFN_in[] = "hydroProfile/JetData.dat";
-        int ctlID_in = 2;
-        char ctlFN_in[] = "hydroProfile/JetCtl.dat";
-        int bufferSize = 1000;
-        int len1 = std::strlen(dataFN_in);
-        int len2 = std::strlen(ctlFN_in);
-        sethydrofilesez_(&dataID_in, dataFN_in, &ctlID_in, ctlFN_in, &bufferSize, len1, len2);
+        std::string dataFN_in = w_path + "hydroProfile/JetData.dat";
+        std::string ctlFN_in = w_path + "hydroProfile/JetCtl.dat";
+        std::cout << "ERROR: not refactored yet. " << std::endl;
+        exit(EXIT_FAILURE);
     } else if (config.medium.bulkFlag == 2) {
-        char dataFN_in[] = "hydroProfile/bulk.dat";
-        int len1 = std::strlen(dataFN_in);
-        read_ccnu_(dataFN_in, len1);
+        std::string dataFN_in = w_path + "hydroProfile/bulk.dat";
+	char buffer[256];
+	strncpy(buffer, dataFN_in.c_str(), sizeof(buffer));
+	buffer[sizeof(buffer)-1] = '\0'; // null-terminate
+
+	int len1 = std::strlen(buffer);
+	read_ccnu_(buffer, len1);
     }
 
     if (config.jet.fixPosition != 1) {
@@ -70,12 +70,12 @@ void readTables(LBTConfig &config) {
     }
 
     // Read scattering rate table
-    std::ifstream f1("tables/ratedata");
+    std::ifstream f1(w_path + "tables/ratedata");
     int n = 450;
     int it, ie;
 
     if (!f1.is_open()) {
-        std::cerr << "Error opening tables/ratedata!\n";
+        std::cerr << "Error opening " << w_path<<  " tables/ratedata!\n";
     } else {
         for (int i = 1; i <= n; ++i) {
             f1 >> it >> ie;
@@ -97,7 +97,7 @@ void readTables(LBTConfig &config) {
     }
 
     // Read HQ elastic rate data
-    std::ifstream f11("b-tables/ratedata-HQ");
+    std::ifstream f11(w_path + "b-tables/ratedata-HQ");
     if (!f11.is_open()) {
         std::cerr << "Error opening b-tables/ratedata-HQ!\n";
     } else {
@@ -112,9 +112,9 @@ void readTables(LBTConfig &config) {
     }
 
     // Read radiation tables for HQ and gluons
-    std::ifstream f12("b-tables/dNg_over_dt_bD6.dat");
-    std::ifstream f13("tables/dNg_over_dt_qD6.dat");
-    std::ifstream f14("tables/dNg_over_dt_gD6.dat");
+    std::ifstream f12(w_path + "b-tables/dNg_over_dt_bD6.dat");
+    std::ifstream f13(w_path + "tables/dNg_over_dt_qD6.dat");
+    std::ifstream f14(w_path + "tables/dNg_over_dt_gD6.dat");
     if (!f12.is_open() || !f13.is_open() || !f14.is_open()) {
         std::cerr << "Error opening dNg_over_dt tables!\n";
     } else {
@@ -177,7 +177,7 @@ void readTables(LBTConfig &config) {
 
 
 
-     std::ifstream fileB("b-tables/distB.dat");
+     std::ifstream fileB(w_path + "b-tables/distB.dat");
      if(!fileB.is_open()) {
         std::cout << "Erro openning data file distB.dat!" << std::endl;
      } else {
@@ -197,7 +197,7 @@ void readTables(LBTConfig &config) {
      }
      fileB.close();
 
-     std::ifstream fileF("b-tables/distF.dat");
+     std::ifstream fileF(w_path + "b-tables/distF.dat");
      if(!fileF.is_open()) {
         std::cout << "Erro openning data file distF.dat!" << std::endl;
      } else {
@@ -233,7 +233,7 @@ bool initialize(LBTConfig& config, int argc, char* argv[], std::time_t& time_sta
 	}
 
 	if (config.medium.vacORmed == 1)
-		readTables(config);
+		readTables("./", config);
 
 	//Set derived quantities
 	config.medium.temp00 = config.medium.temp0;

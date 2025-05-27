@@ -68,10 +68,10 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	// --- Update expected number of gluons radiated ---
 	if (p.pid == 21) {
 		// Gluon: need 1/2 suppression
-		p.radng += nHQgluon(p, dt_lrf, T, E) * KTfactor * config.lbtinput.runKT / 2.0;
+		p.radng += nHQgluon(p, T, E) * dt_lrf * KTfactor * config.lbtinput.runKT / 2.0;
 	} else {
 		// Quarks
-		p.radng += nHQgluon(p, dt_lrf, T, E) * KTfactor * config.lbtinput.runKT;
+		p.radng += nHQgluon(p, T, E) * dt_lrf * KTfactor * config.lbtinput.runKT;
 	}
 
 	// --- Phase space limitation ---
