@@ -49,7 +49,7 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 	//P_inel* in P_tot = P_el* + P_inel*
         //p.radng: <Delta N_inel> the average number of elastic and inelastic scatterings during the time interval.
 	//p.radng = Gamma_inel * delta t
-	//nHQgluon returns <Delta N_inel> = z-integrated radiation rate.
+	//nHQgluon returns Gamma_inel, z-integrated radiation rate.
 
 	// --- Inputs: particle p, local temperature T, energy E ---
 

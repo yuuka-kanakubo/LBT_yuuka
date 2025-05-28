@@ -21,13 +21,12 @@ inline int index_counter =0;
 
 namespace base{
 
-    static constexpr double pi = 3.1415926;
+    static constexpr double pi = 3.141592653589793;
     static constexpr double epsilon = 1e-6;
     static constexpr double tol = 1e-10;
     static constexpr double CA = 3.0;
     static constexpr double CF = 4.0 / 3.0;
-    static constexpr double sctr = 0.1973;  // fm to GeV^-1
-    static constexpr double GEVFM = 0.1970;
+    static constexpr double GEVFM = 0.19732698;
  
 }
 
@@ -65,10 +64,10 @@ inline double dNg_over_dxdydt(int parID, double x0g, double y0g, double energy, 
 	double tauFnc = tau_f(x0g,y0g,energy,mass);
 	double qhatFnc = qhat_over_T3*pow(temp_med,3);   // no longer have CF factor, taken out in splittingP too.
 
-	return 4.0/base::pi*base::CA*alpha_s*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::sctr),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::sctr;
+	return 4.0/base::pi*base::CA*alpha_s*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::GEVFM),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::GEVFM;
 
 	//TODO: Maybe in the future update on alphas for HQ?
-	//return 4.0/base::pi*base::CA*alphasHQ(x0g*y0g*energy,temp_med)*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::sctr),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::sctr;
+	//return 4.0/base::pi*base::CA*alphasHQ(x0g*y0g*energy,temp_med)*splittingP(parID,x0g)*qhatFnc*pow(y0g,5)*pow(sin(Tdiff/2.0/tauFnc/base::GEVFM),2)*pow((energy*energy/(y0g*y0g*energy*energy+mass*mass)),4)/x0g/x0g/energy/energy/base::GEVFM;
 
 }
 
