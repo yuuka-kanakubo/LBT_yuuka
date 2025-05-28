@@ -235,14 +235,6 @@ bool initialize(LBTConfig& config, int argc, char* argv[], std::time_t& time_sta
 	if (config.medium.vacORmed == 1)
 		readTables("./", config);
 
-	//Set derived quantities
-	config.medium.temp00 = config.medium.temp0;
-	config.clock.dt = config.clock.dtau;
-	config.clock.timend = config.clock.tauend;
-	config.clock.time0 = config.clock.tau0;
-	config.physics.alphas = alphas0(config.physics.Kalphas, config.medium.temp0);
-	config.physics.qhat0 = DebyeMass2(config.physics.Kqhat0, config.physics.alphas, config.medium.temp0);
-	config.lbtinput.runKT = config.physics.fixAlphas / 0.3;  // running coupling factor
 
 	// Random number initialization
 	srand(123); // or: srand((unsigned)time(NULL));

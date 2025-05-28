@@ -258,7 +258,14 @@ class LBTcl{
 			delta_Ng = rate_EGrid_low+(HQenergy-HQenergy_num*config.hqrad.delta_HQener)/config.hqrad.delta_HQener*(rate_EGrid_high-rate_EGrid_low);
 			double max_Ng = max_EGrid_low+(HQenergy-HQenergy_num*config.hqrad.delta_HQener)/config.hqrad.delta_HQener*(max_EGrid_high-max_EGrid_low);
 
-
+			//std::cout << "rate_T1E1 " << rate_T1E1 << std::endl;
+			//std::cout << "rate_T1E2 " << rate_T1E2 << std::endl;
+			//std::cout << "rate_T2E1 " << rate_T2E1 << std::endl;
+			//std::cout << "rate_T2E2 " << rate_T2E2 << std::endl;
+			//std::cout << "max_T1E1 " << max_T1E1 << std::endl;
+			//std::cout << "max_T1E2 " << max_T1E2 << std::endl;
+			//std::cout << "max_T2E1 " << max_T2E1 << std::endl;
+			//std::cout << "max_T2E2 " << max_T2E2 << std::endl;
 
 			delta_Ng*=6.0/p.D2piT;
 			max_Ng*=6.0/p.D2piT;

@@ -263,6 +263,7 @@ public:
 
     void loadFromFile(const std::string& filename);
     int checkParameter(int nArg) const;
+    void compute_otherParameter();
 
 
 

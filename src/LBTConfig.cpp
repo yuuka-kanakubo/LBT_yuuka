@@ -1,4 +1,5 @@
 #include "LBTConfig.h"
+#include "LBTcl_base.h"
 
 void LBTConfig::loadFromFile(const std::string& filename) {
 	std::ifstream input(filename);
@@ -71,8 +72,8 @@ void LBTConfig::loadFromFile(const std::string& filename) {
 	// Derived values
 	if (medium.vacORmed == 0) jet.fixPosition = 1; // position is irrelevant in vacuum
 
-	lbtinput.KTsig = lbtinput.KTsig * medium.hydro_Tc;
-	lbtinput.preKT = physics.fixAlphas / 0.3;
+	compute_otherParameter();
+
 
 	// Optional: echo the loaded parameters for verification
 	std::cout << "\n############################################################\n";
@@ -179,3 +180,14 @@ std::cout << "DEBUG: initHardFlag=" << jet.initHardFlag
 	return ctErr;
 }
 
+void LBTConfig::compute_otherParameter(){
+	lbtinput.KTsig = lbtinput.KTsig * medium.hydro_Tc;
+	lbtinput.preKT = physics.fixAlphas / 0.3;
+	medium.temp00 = medium.temp0;
+	clock.dt = clock.dtau;
+	clock.timend = clock.tauend;
+	clock.time0 = clock.tau0;
+	physics.alphas = alphas0(physics.Kalphas, medium.temp0);
+	physics.qhat0 = DebyeMass2(physics.Kqhat0, physics.alphas, medium.temp0);
+	lbtinput.runKT = physics.fixAlphas / 0.3;  // running coupling factor
+}

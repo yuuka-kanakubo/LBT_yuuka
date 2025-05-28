@@ -25,8 +25,13 @@ void test_check_Gamma_inel_p(LBTConfig& config){
 		p.Tfrozen = T_med;
 		p.pid = 1;
 		p.vcfrozen[1] = 0.0; p.vcfrozen[2] = 0.0; p.vcfrozen[3] = 0.0;
+		//(t-t_i) time dulation from last interaction
+		p.Tint_lrf = 1.0;
+
 
 		LBTcl lbt(config);
+		lbt.computeScatteringRate(p, E_ini, T_med);
+
 		double Gamma_inel_p = lbt.nHQgluon(p, p.Tfrozen, p.P[0]);
                 test_ofs 
 			<< std::setw(15) << std::setprecision(10) << E_ini
@@ -55,9 +60,11 @@ int main() {
 	config.medium.hydro_Tc = 0.165;
 	config.lbtinput.KTsig  = 0.05;
 	config.physics.fixAlphas  = 0.15;
+	config.compute_otherParameter();
+
 
 	//Read tables
-	readTables(config);
+	readTables("../../",config);
 
 	//Analytical results exist.
 	test_check_Gamma_inel_p(config);

@@ -26,7 +26,6 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 	//as functions of T and E.
 	double qhat_over_T3 = lam2(flavor, PLen_in, T_in);
 
-
 	// --- Step 4: Apply K-factors ---
 	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
 	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
