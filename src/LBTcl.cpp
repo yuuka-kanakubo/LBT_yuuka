@@ -30,13 +30,13 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
 	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
 
-	double Kfactor = KPfactor * KTfactor * KTfactor * config.lbtinput.runKT * config.lbtinput.preKT;  // full correction
+	//double Kfactor = KPfactor * KTfactor * KTfactor * config.lbtinput.runKT * config.lbtinput.preKT;  // full correction
+	double Kfactor = 1.0;
 
 	qhat_over_T3 *= Kfactor;  // Apply correction
 
 	p.get_D2piT(qhat_over_T3);
 	p.qhat_over_T3 = qhat_over_T3;
-	std::cout << " qhat " << PLen_in << "  " << T_in << "  " << qhat_over_T3 * (T_in*T_in*T_in) << std::endl;
 
 	// --- Step 5: Multiply by T^3 to get real qhat ---
 	//qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)

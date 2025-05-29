@@ -31,10 +31,7 @@ void test_check_Gamma_inel(LBTConfig& config, Particle& p, const bool isQuark){
 		LBTcl lbt(config);
 		lbt.computeScatteringRate(p, E_ini, p.Tfrozen);
 
-		double KTfactor = 1.0 
-			+ config.lbtinput.KTamp * 
-			exp(-pow(0.3 - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
-		double Gamma_inel = lbt.nHQgluon(p, p.Tfrozen, p.P[0]) * KTfactor * config.lbtinput.runKT;
+		double Gamma_inel = lbt.nHQgluon(p, p.Tfrozen, p.P[0]);
                 test_ofs 
 			<< std::setw(18) << std::setprecision(10) << E_ini
 			<< std::setw(18) << std::setprecision(10) << Gamma_inel
@@ -91,11 +88,11 @@ int main() {
 	LBTConfig config;
 	config.medium.bulkFlag = 2;
 	config.jet.fixPosition = 1;
-	config.lbtinput.KPamp =5.0;
-	config.lbtinput.KPsig = 5.0;
+	config.lbtinput.KPamp =0.0;
+	config.lbtinput.KPsig = 0.0;
 	config.lbtinput.KTamp  = 0.0;
 	config.medium.hydro_Tc = 0.165;
-	config.lbtinput.KTsig  = 0.05;
+	config.lbtinput.KTsig  = 0.0;
 	config.physics.fixAlphas  = 0.15;
 	config.compute_otherParameter();
 
