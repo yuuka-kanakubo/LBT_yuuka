@@ -36,6 +36,7 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 
 	p.get_D2piT(qhat_over_T3);
 	p.qhat_over_T3 = qhat_over_T3;
+	std::cout << " qhat " << PLen_in << "  " << T_in << "  " << qhat_over_T3 * (T_in*T_in*T_in) << std::endl;
 
 	// --- Step 5: Multiply by T^3 to get real qhat ---
 	//qhat_over_T3 * pow(T_in, 3);  // Final scattering rate (momentum broadening)

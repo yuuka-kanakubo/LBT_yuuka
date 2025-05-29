@@ -693,19 +693,19 @@ class LBTcl{
 
 		double getFinalStateStatFactor(const int channel, const double f1, const double f2) {
 			switch (channel) {
-				// Final state includes gluons → use Bose statistics
+				// Medium parton is gluon → use Bose statistics
 				case 1: // g + g → g + g
 				case 2: // q + g → q + g
 				case 13: // duplicate of 3, still gluonic → f1
 					return f1;
 
-					// Final state includes only quarks/antiquarks → use Fermi statistics
+					// Medium quarks/antiquarks → use Fermi statistics
 				case 4: // q + q → q + q
 				case 5: // q + q̄ → q + q̄
 				case 6: // q + q̄ → q + q̄ (flavor-exchange)
 				case 7: // q + q̄ → q + q̄ (same-flavor)
 				case 8: // q + q̄ → g + g
-				case 3: // g + q → g + q //TODO: why f2?
+				case 3: // g + q → g + q 
 					return f2;
 
 				default:

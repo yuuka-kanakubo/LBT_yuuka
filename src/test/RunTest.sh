@@ -23,7 +23,7 @@ get_cpp_sources() {
         *test_LBTEMconservation.cpp)
             echo "../LBTConfig.cpp ../main_functions.cpp ../LBTcl.cpp"
             ;;
-        *test_LBTrun_radiatedgluonditrib.cpp)
+        *test_visualiseInputTables.cpp)
             echo "../main_functions.cpp ../LBTConfig.cpp ../LBTcl.cpp"
             ;;
         # Add more mappings as needed

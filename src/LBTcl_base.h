@@ -218,16 +218,16 @@ inline double alphas0(const int Kalphas, const double T){
 
 inline double DebyeMass2(const int Kqhat0, const double alphas, const double T){
 
-       double Y;
+       double qhat;
        if(Kqhat0==1){
-               Y=4.0*base::pi*alphas*pow(T,2);
-               return Y;
+               qhat=4.0*base::pi*alphas*pow(T,2);
+               return qhat;
        }else if(Kqhat0==2){
-               Y=(3.0/2.0)*4.0*base::pi*alphas*pow(T,2);
-               return Y;
+               qhat=(3.0/2.0)*4.0*base::pi*alphas*pow(T,2);
+               return qhat;
        }else if(Kqhat0==3){
-               Y=1.0;
-               return Y;
+               qhat=1.0;
+               return qhat;
        }else{
                std::cout << "Currently this is not implemented in the refactored version of LBT." << std::endl;
                std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
