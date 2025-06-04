@@ -99,14 +99,18 @@ double LBTcl::computeCollisionProbability(
 	double probCol = (config.clock.tauswitch==0)? fraction*dt_lrf*p.tot_el_rate/base::GEVFM : dt_lrf*p.tot_el_rate*p.Xtau_keep/base::GEVFM;
 
 	//Modify vertices to take into account time-ordering collisions
+	if(fraction<1e-6){
+		std::cout << "!!!" << fraction << std::endl;
+		exit(1);
+	}
 	if(config.clock.tauswitch==0) p.V[0]=p.V[0]-fraction*config.clock.dt*p.tot_el_rate/base::GEVFM*sqrt( pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2) )/p.P[0];
 	else p.V[0]=p.V[0]-config.clock.dt*p.tot_el_rate*p.Xtau_keep/base::GEVFM*sqrt(pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2))/p.P[0];
 	//TODO: Is this config.clock.dt -> config.clock.dt * p.timedilation?
 
-	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
-	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
+	//double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
+	//double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
 
-	probCol*=KPfactor*KTfactor*config.lbtinput.runKT;
+	//probCol*=KPfactor*KTfactor*config.lbtinput.runKT;
 	probCol=(1.0-exp(-probCol))*(1.0-probRad);
 
 	return probCol;
@@ -555,11 +559,11 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		double VX, VY, VZ, ed, sd;
 		double &temp = (p.CAT!=5)? config.medium.temp0: config.medium.temp00; 
 		int hydro_ctl = 0;
-		if(p.CAT==3 && (zcar>tcar || xcar>tcar || ycar>tcar)){
-			//std::cout << "WARNING! x > t: " << xcar << " > " << tcar << std::endl;  
-			//std::cout << "WARNING! y > t: " << ycar << " > " << tcar << std::endl;  
-			//std::cout << "WARNING! z > t: " << zcar << " > " << tcar << std::endl;  
-			//std::cout << "WARNING! x_i = t  is enforced. " << std::endl;  
+		if(fabs(zcar)>tcar || fabs(xcar)>tcar || fabs(ycar)>tcar){
+			std::cout << "WARNING! x > t: " << xcar << " > " << tcar << std::endl;  
+			std::cout << "WARNING! y > t: " << ycar << " > " << tcar << std::endl;  
+			std::cout << "WARNING! z > t: " << zcar << " > " << tcar << std::endl;  
+			std::cout << "WARNING! x_i = t  is enforced. " << std::endl;  
 			xcar = tcar;
 			ycar = tcar;
 			zcar = tcar;
@@ -659,6 +663,7 @@ void LBTcl::propagateParticle(Particle &p, double ti, int &free, double &fractio
 		if(belowCutOff(p)) free = 1;
 
 	}//tauswitch
+
 	return;
 }
 
@@ -817,8 +822,9 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 				for(int j=0; j<(int)part_event.size(); j++){
 					if (part_event[j].index() == p.parent1 || part_event[j].index() == p.parent2){
 						if(part_event[j].isActive && part_event[j].CAT==3){
-							int dummy=1;
-							this->propagateParticle(part_event[j], ti, dummy, fraction);
+							int dummy;
+							double dummy_double;
+							this->propagateParticle(part_event[j], ti, dummy, dummy_double);
 							medpart = part_event[j].index();
 						}
 					}
@@ -847,6 +853,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "             Tint     " << p.Tint_lrf << std::endl;
 		std::cout << "             radng     " << p.radng << std::endl;
 		std::cout << "             free     " << free << std::endl;
+		std::cout << "             fraction     " << fraction << std::endl;
 
 		if (p.CAT != 1 && free == 0) {
 
