@@ -24,13 +24,13 @@ def qhat_g(E, T):
 	"""
 	Eq.(25) in arXiv: 2306.13742
         """ 
-	return (C_2g/np.pi)*42.0*zeta(3)*alphas*alphas*T*T*T*np.log(c_g*E*T/DebyeMass2(T))
+	return (C_2g/np.pi)*42.0*zeta(3)*alphas*alphas*T*T*T*np.log(c_g*E*T/(4.0*DebyeMass2(T)))
 
 def qhat_q(E, T):
 	""" 
 	Eq.(25) in arXiv: 2306.13742
 	""" 
-	return (C_2q/np.pi)*42.0*zeta(3)*alphas*alphas*T*T*T*np.log(c_q*E*T/DebyeMass2(T))
+	return (C_2q/np.pi)*42.0*zeta(3)*alphas*alphas*T*T*T*np.log(c_q*E*T/(4.0*DebyeMass2(T)))
 
 def Gamma_inel_q(E, T):
 	above_4 = (t_ti * (alphas * C_A * qhat_q(E, T)) / (2.0 * np.sqrt(DebyeMass2(T)))) * \
@@ -38,7 +38,7 @@ def Gamma_inel_q(E, T):
 	below_4 = (t_ti * t_ti * (alphas * C_A * qhat_q(E, T)) / (4.0 * np.pi)) * \
 		np.log(E/np.sqrt(DebyeMass2(T)))
 	# Use np.where to choose
-	return np.where(E > 4, above_4, below_4)
+	return np.where(E > 4, above_4/0.1973, below_4/0.1973)
 
 def Gamma_inel_g(E, T):
 	above_4 = (t_ti * (alphas * C_A * qhat_g(E, T)) / (2.0 * np.sqrt(DebyeMass2(T)))) * \
@@ -46,14 +46,14 @@ def Gamma_inel_g(E, T):
 	below_4 = (t_ti * t_ti * (alphas * C_A * qhat_g(E, T)) / (4.0 * np.pi)) * \
 		np.log(E/np.sqrt(DebyeMass2(T)))
 	# Use np.where to choose
-	return np.where(E > 4, above_4, below_4)
+	return np.where(E > 4, above_4/0.1973, below_4/0.1973)
 
 # List your data files and their plot settings
 data_files = [
-    {"filename": "DATA_Gamma_inel_q.dat", "xlabel": "$E_0$", "ylabel": "$Gamma_{inel}$", "title": "Inelastic scat. rate of quarks",  "func": Gamma_inel_q},
-    {"filename": "DATA_qhat_q.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q}$",      "title": "qhat of quarks",                  "func": qhat_q},
-    {"filename": "DATA_Gamma_inel_g.dat", "xlabel": "$E_0$", "ylabel": "$Gamma_{inel}$", "title": "Inelastic scat. rate of gluons",  "func": Gamma_inel_g},
-    {"filename": "DATA_qhat_g.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q}$",      "title": "qhat of gluons",                  "func": qhat_g},
+    {"filename": "DATA_Gamma_inel_q.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", "title": "Inelastic scat. rate of quarks",  "func": Gamma_inel_q},
+    {"filename": "DATA_qhat_q.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q} \ \mathrm{[GeV^{3}}]$",      "title": "qhat of quarks",                  "func": qhat_q},
+    {"filename": "DATA_Gamma_inel_g.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", "title": "Inelastic scat. rate of gluons",  "func": Gamma_inel_g},
+    {"filename": "DATA_qhat_g.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q} \ \mathrm{[GeV^{3}]}$",      "title": "qhat of gluons",                  "func": qhat_g},
 ]
 
 
@@ -76,7 +76,7 @@ if AnalyticalShow:
 	
 	ax.set_xlabel('E')
 	ax.set_ylabel('T')
-	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^q(E, T)$')
+	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^q(E, T) \mathrm{fm^{-1}}$')
 	ax.set_title(r'3D Plot of $\Gamma_{\mathrm{inel}}^q(E, T)$')
 	fig.colorbar(surf, shrink=0.5, aspect=5)
 	ax.invert_xaxis()
@@ -104,7 +104,7 @@ if AnalyticalShow:
 	
 	ax.set_xlabel('E')
 	ax.set_ylabel('T')
-	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^g(E, T)$')
+	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^g(E, T) \mathrm{fm^{-1}}$')
 	ax.set_title(r'3D Plot of $\Gamma_{\mathrm{inel}}^g(E, T)$')
 	fig.colorbar(surf, shrink=0.5, aspect=5)
 	ax.invert_xaxis()
@@ -126,8 +126,8 @@ for ax, data_info in zip(axes, data_files):
     data = np.loadtxt(data_info["filename"])
     x = data[:,0]
     y = data[:,1]
-    ax.plot(x, [data_info["func"](x_, T_fixed) for x_ in x], linestyle='-', lw=1, color="gray", alpha=0.5, label="semi-analytical")
     ax.plot(x, y, marker='o', linestyle='-', ms=1.5, color="goldenrod", alpha=0.5, label="LBT")
+    ax.plot(x, [data_info["func"](x_, T_fixed) for x_ in x], linestyle='--', lw=1, color="black", alpha=0.75, label="analytical")
     ax.set_xlabel(data_info["xlabel"])
     ax.set_ylabel(data_info["ylabel"])
     ax.set_title(data_info["title"])
