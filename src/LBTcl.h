@@ -272,6 +272,7 @@ class LBTcl{
 			p.max_Ng = max_Ng;
 			p.Tint_lrf = time_gluon;
 
+			if(p.pid == 21) delta_Ng/=2.0;
 
 			return delta_Ng;
 
