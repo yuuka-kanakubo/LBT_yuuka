@@ -85,8 +85,6 @@ double LBTcl::computeRadiationProbability(Particle &p, const double T, const dou
 
 double LBTcl::computeCollisionProbability(
 		Particle &p,
-		const double PLen_in,
-		const double T_in,
 		const double fraction,
 		const double probRad
 		) {
@@ -415,9 +413,6 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 
 	//CHECKING
 	//std::cout << __FILE__ << "(" << __LINE__ << ")" << "After collHQ23" << std::endl;
-	//for (auto it = part_event.begin(); it != part_event.end(); ++it) {
-	//	it->Print(true);
-	//}
 	//std::cout << "=======event part / current part =======" << std::endl;
 	//for (auto it = part_current.begin(); it != part_current.end(); ++it) {
 	//	it->Print(true);
@@ -429,19 +424,10 @@ int LBTcl::handleRadiation(Particle &p, const double qt, std::vector<Particle> &
 	// Step 4: Handle multiple gluons (Poisson) for HQ
 
 	while (--nrad > 0) {
-		//            double pc2_more[4] = {0.0};
-		//            double pc4_more[4] = {0.0};
-		//            double pb[4] = {0.0};
-		std::cout << "refactor not done for radiationHQ" << std::endl;
-		//
 		std::array <double, 4> pc_rad1 = {0.,0.,0.,0.};
 		std::array <double, 4> pc_rad2 = {0.,0.,0.,0.};
 		std::array <double, 4> pc_fin12 = {0.,0.,0.,0.};
 		bool successAdditional23 = radiationHQ(p, pc_rad, pc_fin, pc_rad1, pc_rad2, pc_fin12);
-		exit(1);
-		//radiation(qhat0, vc0, pc4, pc2_more, pc4_more, pb,
-		//          iclrad, Tdiff, Ejp);
-		//
 		if (successAdditional23) {
 
 
@@ -853,7 +839,6 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 		std::cout << "             Tint     " << p.Tint_lrf << std::endl;
 		std::cout << "             radng     " << p.radng << std::endl;
 		std::cout << "             free     " << free << std::endl;
-		std::cout << "             fraction     " << fraction << std::endl;
 
 		if (p.CAT != 1 && free == 0) {
 
@@ -872,7 +857,7 @@ void LBTcl::LBT(std::vector<Particle> &part_event, double ti) {
 
 			// Compute probabilities
 			double probRad = computeRadiationProbability(p, T, Eloc);
-			double probCol = computeCollisionProbability(p, PLenloc, T, fraction, probRad);
+			double probCol = computeCollisionProbability(p, fraction, probRad);
 			std::cout << "probRad " << probRad << std::endl;
 			std::cout << "probCol " << probCol << std::endl;
 			double probTot = probCol + probRad;

@@ -23,10 +23,8 @@ class LBTcl{
 		void propagateParticle(Particle &p, double ti, int &free, double &fraction);
 		double computeCollisionProbability(
 				Particle &p,
-				double qhat,
-				double pLen,
-				double T,
-				double fraction
+				double fraction,
+				double probRad 
 				);
 		void FinalTouch(Particle &p, std::vector<Particle> & part_current);
 
@@ -1225,10 +1223,10 @@ class LBTcl{
 			//           P4(4)-momentum of 2nd radiated gluon(pc_rad2)
 			//           i=1: no radiation; 0:successful radiation
 
-			std::cout << "pc_jet " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
-			std::cout << "pc_fin0 " <<  pc_fin0[0] << "  " << pc_fin0[1] << "  " << pc_fin0[2] << "  " << pc_fin0[3] << std::endl;
-			std::cout << "pc_rad0 " <<  pc_rad0[0] << "  " << pc_rad0[1] << "  " << pc_rad0[2] << "  " << pc_rad0[3] << std::endl;
-exit(1);
+//			std::cout << "pc_fin0 " <<  pc_fin0[0] << "  " << pc_fin0[1] << "  " << pc_fin0[2] << "  " << pc_fin0[3] << std::endl;
+//			std::cout << "pc_rad0 " <<  pc_rad0[0] << "  " << pc_rad0[1] << "  " << pc_rad0[2] << "  " << pc_rad0[3] << std::endl;
+//			std::cout << "pc_jet " <<  pc_jet[0] << "  " << pc_jet[1] << "  " << pc_jet[2] << "  " << pc_jet[3] << std::endl;
+//			std::cout << "v_flow " <<  v_flow[0] << "  " << v_flow[1] << "  " << v_flow[2] << "  " << v_flow[3] << std::endl;
 
 			double mass2=(pc_fin0[0]*pc_fin0[0]
 					-pc_fin0[1]*pc_fin0[1]
@@ -1238,10 +1236,14 @@ exit(1);
 
                         if (p.pid!=4){
 				if(fabs(pc_fin0[0]-sqrt(pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3]))>base::epsilon){
-					std::cout << "ERROR!  EE - PP != 0 :  " << pc_fin0[0]*pc_fin0[0] 
-						<< "   " <<  pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3] 
-						<< std::endl;
-					exit(EXIT_FAILURE);
+					pc_fin0[0] = sqrt(pc_fin0[1] * pc_fin0[1]
+							+ pc_fin0[2] * pc_fin0[2]
+							+ pc_fin0[3] * pc_fin0[3]
+							);
+					//std::cout << "ERROR!  EE - PP != 0 :  " << pc_fin0[0]*pc_fin0[0] 
+					//	<< "   " <<  pc_fin0[1]*pc_fin0[1]+pc_fin0[2]*pc_fin0[2]+pc_fin0[3]*pc_fin0[3] 
+					//	<< std::endl;
+					//exit(EXIT_FAILURE);
 				}
 			}
 
@@ -1254,7 +1256,7 @@ exit(1);
 
 			//At rest frame check if energy is too small.
 			double alpha_s = alphas0(config.physics.Kalphas, p.Tfrozen);  // Assuming alphas0() computes coupling
-			double Eloc = pc_fin0[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
+			double Eloc = pc_jet[0];//Eloc == HQenergy (energy of the jet particle at fluid rest frame)
 
 
 			double lim_low = sqrt(6.0 * base::pi * alpha_s) * p.Tfrozen / Eloc;
@@ -1487,6 +1489,10 @@ exit(1);
 				}
 
 			} while(!DONE && nloopOut<config.counter.loopN);
+
+			std::cout << "pc_fin12 " <<  pc_fin12[0] << "  " << pc_fin12[1] << "  " << pc_fin12[2] << "  " << pc_fin12[3] << std::endl;
+			std::cout << "pc_rad2 " <<  pc_rad2[0] << "  " << pc_rad2[1] << "  " << pc_rad2[2] << "  " << pc_rad2[3] << std::endl;
+			std::cout << "pc_rad1 " <<  pc_rad1[0] << "  " << pc_rad1[1] << "  " << pc_rad1[2] << "  " << pc_rad1[3] << std::endl;
 
 			if(!DONE) return false;
 			else return true;
