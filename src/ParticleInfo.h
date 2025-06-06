@@ -28,7 +28,46 @@
 //}
 //
 
+enum class channel {
+      gg2gg, //case 1
+      qg2qg, //case 2
+      gq2gq, //case 3
+      qg2gq, //case 13
+      qq2qq, //case 4
+      qqbar2qqbar, //case 5
+      qqbar2qqbar_flavor_exchange, //case 6
+      qqbar2qqbar_flavor_kept, //case 7
+      HF_channel11, //case 11
+      HF_channel12, //case 12
+      qqbar2gg //case 8
+};
 
+
+inline std::string channel_str(const channel cnl) {
+	switch (cnl) {
+		case channel::gg2gg: // g + g → g + g
+			return " channel::gg2gg: // g + g → g + g " ;
+		case channel::qg2qg: // q + g → q + g
+			return " channel::qg2qg: // q + g → q + g " ;
+		case channel::qg2gq: // duplicate of 3, still gluonic → f1
+			return " channel::qg2gq: // duplicate of 3, still gluonic → f1 " ;
+		case channel::qq2qq: // q + q → q + q
+			return " channel::qq2qq: // q + q → q + q " ;
+		case channel::qqbar2qqbar: // q + q̄ → q + q̄
+			return " channel::qqbar2qqbar: // q + q̄ → q + q̄ " ;
+		case channel::qqbar2qqbar_flavor_exchange: // q + q̄ → q + q̄ (flavor-exchange)
+			return " channel::qqbar2qqbar_flavor_exchange: // q + q̄ → q + q̄ (flavor-exchange) " ;
+		case channel::qqbar2qqbar_flavor_kept: // q + q̄ → q + q̄ (same-flavor)
+			return " channel::qqbar2qqbar_flavor_kept: // q + q̄ → q + q̄ (same-flavor) " ;
+		case channel::qqbar2gg: // q + q̄ → g + g
+			return " channel::qqbar2gg: // q + q̄ → g + g " ;
+		case channel::gq2gq: // g + q → g + q 
+			return " channel::gq2gq: // g + q → g + q  " ;
+		default:
+			std::cerr << "ERROR: no other channel available." << std::endl;
+			exit(EXIT_FAILURE);
+	}
+}
 
 
 

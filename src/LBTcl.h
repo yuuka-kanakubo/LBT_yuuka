@@ -335,8 +335,10 @@ class LBTcl{
 
 		void flavor(
 				const int initialPid, const double RTE, const double E, const double T,
-				int& channel, int& pid2, int& pid3
+				channel& channel_, int& pid_med, int& pid_rec
 			   ) {
+			//pid2: med
+			//pid3: rec
 			static const std::array<int, 6> valencePids = {1, 2, 3, -1, -2, -3};
 
 			// Scattering rate components
@@ -356,32 +358,33 @@ class LBTcl{
 			if (initialPid == 21) {
 				double R0 = RTE;
 				if (a <= RTEg1 / R0) {
-					channel = 1; pid2 = pid3 = 21;
+					channel_ = channel::gg2gg; 
+					pid_med = pid_rec = 21;
 				} else if (a <= (RTEg1 + RTEg2) / R0) {
-					channel = 2;
+					channel_ = channel::qg2qg; //case 2
 					do {
 						b = static_cast<int>(ran0(&config.rng.NUM1) * 6);
 					} while (b >= 6);
-					pid2 = valencePids[b];
-					pid3 = 21;
+					pid_med = valencePids[b];
+					pid_rec = 21;
 				} else {
-					channel = 3;
+					channel_ = channel::gq2gq; //case 3
 					do {
 						b = static_cast<int>(ran0(&config.rng.NUM1) * 6);
 					} while (b >= 6);
-					pid2 = pid3 = valencePids[b];
+					pid_med = pid_rec = valencePids[b];
 				}
 			}
 			else if (abs(initialPid) == 4) {
 				double R0 = RTE;
 				if (a <= RTEHQ11 / R0) {
-					channel = 11;
+					channel_ = channel::HF_channel11; //case 11
 					b = static_cast<int>(ran0(&config.rng.NUM1) * 6);
 					if (b >= 6) b = 5;
-					pid2 = pid3 = valencePids[b];
+					pid_med = pid_rec = valencePids[b];
 				} else {
-					channel = 12;
-					pid2 = pid3 = 21;
+					channel_ = channel::HF_channel12; //case 12
+					pid_med = pid_rec = 21;
 				}
 			}
 			else {
@@ -389,40 +392,40 @@ class LBTcl{
 				double R3 = RTEq3, R4 = RTEq4, R5 = RTEq5, R6 = RTEq6, R7 = RTEq7;
 
 				if (a <= R3 / R0) {
-					channel = 13;
-					pid2 = pid3 = 21;
+					channel_ = channel::qg2gq; //case 13
+					pid_med = pid_rec = 21;
 				} else if (a <= (R3 + R4) / R0) {
-					channel = 4;
+					channel_ = channel::qq2qq; //case 4
 					do {
 						b = static_cast<int>(ran0(&config.rng.NUM1) * 6);
 						if (b >= 6) b = 5;
-						pid2 = pid3 = valencePids[b];
-					} while (pid2 == initialPid);
+						pid_med = pid_rec = valencePids[b];
+					} while (pid_med == initialPid);
 				} else if (a <= (R3 + R4 + R5) / R0) {
-					channel = 5;
-					pid2 = pid3 = initialPid;
+					channel_ = channel::qqbar2qqbar; //case 5
+					pid_med = pid_rec = initialPid;
 				} else if (a <= (R3 + R4 + R5 + R6) / R0) {
-					channel = 6;
-					pid3 = -initialPid;
+					channel_ = channel::qqbar2qqbar_flavor_exchange; //case 6
+					pid_rec = -initialPid;
 					do {
 						b = static_cast<int>(ran0(&config.rng.NUM1) * 3);
 						if (b >= 3) b = 2;
-						pid2 = -initialPid / abs(initialPid) * valencePids[b];
-					} while (abs(pid2) == abs(pid3));
+						pid_med = -initialPid / abs(initialPid) * valencePids[b];
+					} while (abs(pid_med) == abs(pid_rec));
 				} else if (a <= (R3 + R4 + R5 + R6 + R7) / R0) {
-					channel = 7;
-					pid2 = pid3 = -initialPid;
+					channel_ = channel::qqbar2qqbar_flavor_kept; //case 7
+					pid_med = pid_rec = -initialPid;
 				} else {
-					channel = 8;
-					pid3 = -initialPid;
-					pid2 = 21;
+					channel_ = channel::qqbar2gg;//case 8
+					pid_rec = -initialPid;
+					pid_med = 21;
 				}
 			}
 		}
 
 
 		bool sampleThermalParton(
-				const int channel,
+				const channel channel_,
 				const std::array<double, 4>& pc_jet,
 				const double T,
 				double& maxWeight,
@@ -442,16 +445,16 @@ class LBTcl{
 				int idx_e2 = std::min(static_cast<int>((xw - config.hq22.min_e2) / config.hq22.bin_e2), config.hq22.N_e2 - 1);
 				double fval = 0.0;
 
-				if (channel == 11) {
+				if (channel_ == channel::HF_channel11) {
 					fval = config.hq22.distFncF[idx_T][idx_P][idx_e2] / fFmax;
 					maxWeight =config.hq22. distMaxF[idx_T][idx_P][idx_e2];
-				} else if (channel == 12) {
+				} else if (channel_ == channel::HF_channel12) {
 					fval = config.hq22.distFncB[idx_T][idx_P][idx_e2] / fBmax;
 					maxWeight = config.hq22.distMaxB[idx_T][idx_P][idx_e2];
 				} else {
 					std::cout 
 						<< "ERROR:  This function sampleThermalParton is called only within the collHQ22."
-						<< " Only channel =11 or 12 is allowed." 
+						<< " Only channel =11 or 12 (HF_channel11 or HF_channel12) is allowed." 
 						<< std::endl;
 					exit(EXIT_FAILURE);
 				}
@@ -467,7 +470,7 @@ class LBTcl{
 		}
 
 		bool sampleCollisionAngles(
-				const int channel,
+				const channel channel_,
 				const std::array <double, 4> &pc_jet,
 				const double T,
 				const double e2,
@@ -514,10 +517,10 @@ class LBTcl{
 					continue;
 				}
 
-				if (channel == 11) {
+				if (channel_ == channel::HF_channel11) {
 					ff = 1.0 / (std::exp(e2 / T) + 1.0) * (1.0 - 1.0 / (std::exp(e4 / T) + 1.0));
 					msq = Mqc2qc(s, t, HQmass);
-				} else if (channel == 12) {
+				} else if (channel_ == channel::HF_channel12) {
 					ff = 1.0 / (std::exp(e2 / T) - 1.0) * (1.0 + 1.0 / (std::exp(e4 / T) - 1.0));
 					msq = Mgc2gc(s, t, HQmass);
 				} else {
@@ -666,49 +669,49 @@ class LBTcl{
 
 
 		double computeMatrixElement(
-				const int channel,
+				const channel channel_,
 				const double ss, const double tt, const double uu,
 				const double tmin, const double tmax,
 				const double p0E, const double p2E
 				) {
-			switch (channel) {
-				case 1: return Mgg2gg_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 2: return Mqg2qg_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 3:
-				case 13:
-					return Mgq2gq_approx(ss, tt, uu, tmin, tmax, p0E, p2E);
-				case 4: return Mqq2qq_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 5: return Mqqbar2qqbar_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 6: return Mqqbar2qqbar_diff_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 7: return Mqqbar2qqbar_same_approx(ss, tt, uu, tmin, p0E, p2E);
-				case 8: return Mqqbar2gg_approx(ss, tt, uu, tmin, p0E, p2E);
+			switch (channel_) {
+				case channel::gg2gg: return Mgg2gg_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::qg2qg: return Mqg2qg_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::gq2gq:
+				case channel::qg2gq:
+				        return Mgq2gq_approx(ss, tt, uu, tmin, tmax, p0E, p2E);
+				case channel::qq2qq: return Mqq2qq_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::qqbar2qqbar: return Mqqbar2qqbar_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::qqbar2qqbar_flavor_exchange: return Mqqbar2qqbar_diff_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::qqbar2qqbar_flavor_kept: return Mqqbar2qqbar_same_approx(ss, tt, uu, tmin, p0E, p2E);
+				case channel::qqbar2gg: return Mqqbar2gg_approx(ss, tt, uu, tmin, p0E, p2E);
 				default:
-					std::cerr << "Unsupported channel = " << channel << " in computeMatrixElement()\n";
+					std::cerr << "Unsupported channel = " << channel_str(channel_) << " in computeMatrixElement()\n";
 					exit(EXIT_FAILURE);
 			}
 		}
 
 
 
-		double getFinalStateStatFactor(const int channel, const double f1, const double f2) {
-			switch (channel) {
+		double getFinalStateStatFactor(const channel channel_, const double f1, const double f2) {
+			switch (channel_) {
 				// Medium parton is gluon → use Bose statistics
-				case 1: // g + g → g + g
-				case 2: // q + g → q + g
-				case 13: // duplicate of 3, still gluonic → f1
-					return f1;
+				case channel::gg2gg: // g + g → g + g
+				case channel::qg2qg: // q + g → q + g
+				case channel::qg2gq: // duplicate of 3, still gluonic → f1
+				        return f1;
 
-					// Medium quarks/antiquarks → use Fermi statistics
-				case 4: // q + q → q + q
-				case 5: // q + q̄ → q + q̄
-				case 6: // q + q̄ → q + q̄ (flavor-exchange)
-				case 7: // q + q̄ → q + q̄ (same-flavor)
-				case 8: // q + q̄ → g + g
-				case 3: // g + q → g + q 
+				        // Medium quarks/antiquarks → use Fermi statistics
+				case channel::qq2qq: // q + q → q + q
+				case channel::qqbar2qqbar: // q + q̄ → q + q̄
+				case channel::qqbar2qqbar_flavor_exchange: // q + q̄ → q + q̄ (flavor-exchange)
+				case channel::qqbar2qqbar_flavor_kept: // q + q̄ → q + q̄ (same-flavor)
+				case channel::qqbar2gg: // q + q̄ → g + g
+				case channel::gq2gq: // g + q → g + q 
 					return f2;
 
 				default:
-					std::cerr << "Warning: channel=" << channel << " not recognized for ff assignment.\n";
+					std::cerr << "Warning: channel=" << channel_str(channel_) << " not recognized for ff assignment.\n";
 					return 0.0;
 			}
 		}
@@ -717,7 +720,7 @@ class LBTcl{
 
 
 		void colljet22(
-				const int channel,
+				const channel channel_,
 				const Particle &p,
 				std::array<double, 4> &pc_rec,
 				std::array<double, 4> &pc_med,
@@ -791,8 +794,8 @@ class LBTcl{
 				double u = s - t;
 
 				// Matrix element
-				double msq = computeMatrixElement(channel, s, t, u, tmin, tmax, pc_jet[0], pc_med[0]);
-				double ff = getFinalStateStatFactor(channel, f1, f2);
+				double msq = computeMatrixElement(channel_, s, t, u, tmin, tmax, pc_jet[0], pc_med[0]);
+				double ff = getFinalStateStatFactor(channel_, f1, f2);
 				//std::cout << "channel " << channel << std::endl;
 				//std::cout << "msq " << std::setw(15) << std::setprecision(10) << msq << std::endl;
 				//std::cout << "ff " << std::setw(15) << std::setprecision(10) << ff << std::endl;
@@ -889,7 +892,7 @@ class LBTcl{
 
 
 		void collHQ22(
-				int channel,
+				channel channel_,
 				const Particle& p, // incoming particle
 				std::array<double, 4> &pc_rec,
 				std::array<double, 4> &pc_med,
@@ -916,7 +919,7 @@ class LBTcl{
 			double mass = (mass2 > 1e-12) ? std::sqrt(mass2) : 0.0;
 
 			double maxWeight, e2;
-			bool sampleOK = sampleThermalParton(channel, pc_jet, p.Tfrozen, maxWeight, e2);
+			bool sampleOK = sampleThermalParton(channel_, pc_jet, p.Tfrozen, maxWeight, e2);
 			if (!sampleOK) {
 				qt = 0.0;
 				pc_rec.fill(0.0);
@@ -931,7 +934,7 @@ class LBTcl{
 			double qhat0 = DebyeMass2(config.physics.Kqhat0, alpha_s, p.Tfrozen);
 			double e4, theta2, theta4, phi24;
 			bool anglesOK = sampleCollisionAngles(
-					channel, pc_jet, p.Tfrozen, e2, qhat0, maxWeight,
+					channel_, pc_jet, p.Tfrozen, e2, qhat0, maxWeight,
 					e4, theta2, theta4, phi24
 					);
 			if (!anglesOK) {
@@ -1393,11 +1396,9 @@ class LBTcl{
 
 					// select appropriate solution
 					if(!doneA && !doneB) {
-						//          cout << "Solutions fail ..." << endl;
 						nloop2++;
 						continue;
 					} else if(doneA && doneB) {
-						//          cout << "Both solutions work!" << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
 						if(abs(sk1z1-sk1zOld)<abs(sk1z2-sk1zOld)) {
 							sk1z=sk1z1;
 						} else {
@@ -1405,17 +1406,14 @@ class LBTcl{
 						}
 
 					} else if(doneA) {
-						//          cout << "pass A ..." << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
 						sk1z=sk1z1;
 					} else {
-						//          cout << "pass B ..." << "  " << sE1 << "  " << sp1x << "  " << sp1y << "  " << sp1z << "  " << sE2 << "  " << sp2x << "  " << sp2y << "  " << sp2z << "  " << sk0 << "  " << skx << "  " << sky << "  " << skz << "  " << sqx << "  " << sqy << "  " << sq0A << "  " << sqzA << "  " << sq0B << "  " << sqzB << endl;
 						sk1z=sk1z2;
 					}
 
 					doneAB=true;   
 
 					sk1p=sqrt(sk10*sk10-sk1z*sk1z);
-					//           cout << "check solution: " << pow(sp10-sk20,2)-pow(sk1p,2)-pow(sk2p,2)-2.0*sk1p*sk2p*cos(stheta12)-pow(sp0z-sk1z-sk2z,2)-pow(mass,2) <<"  "<< aaa*sk1z*sk1z+bbb*sk1z+ccc <<"  "<<2.0*sk1p*sk2p*cos(stheta12)-2.0*(sp0z-sk2z)*sk1z+sAA<<"  "<<2.0*sk1p*sk2p*cos(stheta12)+2.0*(sp0z-sk2z)*sk1z-sAA << endl;
 
 				} while (!doneAB && nloop1<config.counter.loopN && nloop2<config.counter.loopN);
 
@@ -1465,8 +1463,8 @@ class LBTcl{
 								-pc_rad2[1]*pc_rad2[1]
 								-pc_rad2[2]*pc_rad2[2]
 								-pc_rad2[3]*pc_rad2[3])>0.000001) {
-						std::cout << "Wrong solution -- not on shell" << "  " << sk10 << "  " << sk1x << "  " << sk1y << "  " << sk1z << "  " << sk20 << "  " << sk2x << "  " << sk2y << "  " << sk2z << "  " << stheta12 << "  " << sp10 << "  " << sp10-sk20 << "  " << -sk1x-sk2x << "  " << -sk1y-sk2y << "  " << sp0z << "  " << sp0z-sk1z-sk2z << "  " <<mass<< "  "<<pow(sp10-sk20,2)-pow(sk1x+sk2x,2)-pow(sk1y+sk2y,2)-pow(sp0z-sk1z-sk2z,2)-pow(mass,2)<<std::endl;
-						std::cout << abs(pc_rad1[0]*pc_rad1[0]-pc_rad1[1]*pc_rad1[1]-pc_rad1[2]*pc_rad1[2]-pc_rad1[3]*pc_rad1[3]) <<"  "<< abs(pc_fin12[0]*pc_fin12[0]-pc_fin12[1]*pc_fin12[1]-pc_fin12[2]*pc_fin12[2]-pc_fin12[3]*pc_fin12[3]-mass*mass) <<"  "<< abs(pc_rad2[0]*pc_rad2[0]-pc_rad2[1]*pc_rad2[1]-pc_rad2[2]*pc_rad2[2]-pc_rad2[3]*pc_rad2[3]) <<std::endl;
+						std::cout << "ERROR:  in radiationHQ, off-shell radiated gluons " << std::endl;
+						exit(EXIT_FAILURE);
 					}
 
 					DONE=true;
@@ -1475,6 +1473,7 @@ class LBTcl{
 					for(int i=0; i<=3; i++) {
 						if(0 && abs(pc_rad1[i]+pc_fin12[i]-pc_rad1[i]-pc_fin12[i]-pc_rad2[i])>0.000001) {
 							std::cout << "Warning: Violation of E.M. conservation!  " << i << " " << abs(pc_rad1[i]+pc_fin12[i]-pc_rad1[i]-pc_fin12[i]-pc_rad2[i]) << std::endl;
+							exit(EXIT_FAILURE);
 						}
 					}
 
@@ -1484,6 +1483,7 @@ class LBTcl{
 					double shell4=abs(pc_rad2[0]*pc_rad2[0]-pc_rad2[1]*pc_rad2[1]-pc_rad2[2]*pc_rad2[2]-pc_rad2[3]*pc_rad2[3]);
 					if(shell2>0.000001 || shell3>0.000001 || shell4>0.000001) {
 						std::cout << "Warning: Violation of on-shell: " << shell2 << "  " << shell3 << "  " << shell4 << std::endl;
+						exit(EXIT_FAILURE);
 					}
 
 				}

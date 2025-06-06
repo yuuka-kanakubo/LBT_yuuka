@@ -30,8 +30,8 @@ void LBTcl::computeScatteringRate(Particle &p, const double PLen_in, const doubl
 	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
 	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
 
-	//double Kfactor = KPfactor * KTfactor * KTfactor * config.lbtinput.runKT * config.lbtinput.preKT;  // full correction
-	double Kfactor = 1.0;
+	double Kfactor = KPfactor * KTfactor * KTfactor * config.lbtinput.runKT * config.lbtinput.preKT;  // full correction
+	//double Kfactor = 1.0;
 
 	qhat_over_T3 *= Kfactor;  // Apply correction
 
@@ -105,10 +105,15 @@ double LBTcl::computeCollisionProbability(
 	else p.V[0]=p.V[0]-config.clock.dt*p.tot_el_rate*p.Xtau_keep/base::GEVFM*sqrt(pow(p.P[1],2)+pow(p.P[2],2)+pow(p.P[3],2))/p.P[0];
 	//TODO: Is this config.clock.dt -> config.clock.dt * p.timedilation?
 
-	//double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
-	//double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(T_in - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
+	// Boost momentum into local fluid frame
+	std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
+	std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
+	this->trans(vc0, pc0);
+	double PLen_in = sqrt(pc0[1]*pc0[1] + pc0[2]*pc0[2] + pc0[3]*pc0[3]);
+	double KPfactor = 1.0 + config.lbtinput.KPamp * exp(-PLen_in * PLen_in / (2.0 * config.lbtinput.KPsig * config.lbtinput.KPsig));
+	double KTfactor = 1.0 + config.lbtinput.KTamp * exp(-pow(p.Tfrozen - config.medium.hydro_Tc, 2) / (2.0 * config.lbtinput.KTsig * config.lbtinput.KTsig));
 
-	//probCol*=KPfactor*KTfactor*config.lbtinput.runKT;
+	probCol*=KPfactor*KTfactor*config.lbtinput.runKT;
 	probCol=(1.0-exp(-probCol))*(1.0-probRad);
 
 	return probCol;
@@ -120,8 +125,9 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 
 	// Step 1: Determine channel and output momenta
 	// Decide flavor outcome
-	int channel, pid_med, pid_rec;
-	flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel, pid_med, pid_rec);
+	channel channel_;
+	int pid_med, pid_rec, channel;
+	flavor(p.pid, p.tot_el_rate, PLenloc, p.Tfrozen, channel_, pid_med, pid_rec);
 
 	// Deactivate incoming parton
 	p.isActive = false;
@@ -142,10 +148,10 @@ double LBTcl::handleElasticCollision(Particle &p, const double PLenloc, std::vec
 	std::array<double, 4> pc_rec = {0.,0.,0.,0.};// output: final medium parton momentum
 	std::array<double, 4> pc_med = {0.,0.,0.,0.};// output: initial medium parton
 	std::array<double, 4> pc_fin = {0.,0.,0.,0.};
-	if (channel == 11 || channel == 12) {
-		collHQ22(channel, p, pc_rec, pc_med, pc_fin, qt);
+	if (channel_ == channel::HF_channel11 || channel_ == channel::HF_channel12) {
+		collHQ22(channel_, p, pc_rec, pc_med, pc_fin, qt);
 	} else {
-		colljet22(channel, p, pc_rec, pc_med, pc_fin, qt);
+		colljet22(channel_, p, pc_rec, pc_med, pc_fin, qt);
 	}
 
 	for(int i=0; i<=3; i++){
@@ -658,18 +664,6 @@ bool LBTcl::belowCutOff(const Particle &p){
 
 	std::array<double,4> pc0 = {p.P[0], p.P[1], p.P[2], p.P[3]};
 	std::array<double,4> vc0 = {0.0, p.vcfrozen[1], p.vcfrozen[2], p.vcfrozen[3]};
-	//	std::cout << "vc0 " 
-	//		<< vc0[0] << "  " 
-	//		<< vc0[1] << "  " 
-	//		<< vc0[2] << "  " 
-	//		<< vc0[3] << "  " 
-	//		<< std::endl;
-	//	std::cout << "pc0 " 
-	//		<< pc0[0] << "  " 
-	//		<< pc0[1] << "  " 
-	//		<< pc0[2] << "  " 
-	//		<< pc0[3] << "  " 
-	//		<< std::endl;
 
 	this->trans(vc0, pc0);
 	double Eloc = pc0[0];
