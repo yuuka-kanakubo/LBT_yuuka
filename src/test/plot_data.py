@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
+from matplotlib import cm
 from scipy.special import zeta
+import itertools
 
-AnalyticalShow = True
 
 C_2g = 3
 C_2q = 4/3
@@ -192,72 +192,93 @@ def Gamma_el_q(E, T):
 
 # List your data files and their plot settings
 data_files = [
-    {"filename": "DATA_qhat_q.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q} \ \mathrm{[GeV^{3}}]$",      "title": "qhat of quarks",                  "data":data_dummy, "func": qhat_q},
-    {"filename": "DATA_qhat_g.dat",       "xlabel": "$E_0$", "ylabel": "$\hat{q} \ \mathrm{[GeV^{3}]}$",      "title": "qhat of gluons",                  "data":data_dummy, "func": qhat_g},
-    {"filename": "DATA_Gamma_inel_q.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", "title": "Inelastic scat. rate of quarks", "data":data_Gamma_inel_q, "func": Gamma_inel_q},
-    {"filename": "DATA_Gamma_inel_g.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", "title": "Inelastic scat. rate of gluons", "data":data_Gamma_inel_g, "func": Gamma_inel_g}
-#    {"filename": "DATA_Gamma_el_q.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{el} \ \mathrm{[fm^{-1}]}$", "title": "Elastic scat. rate of quarks",       "data":data_dummy, "func": Gamma_el_q},
-#    {"filename": "DATA_Gamma_el_g.dat", "xlabel": "$E_0$", "ylabel": "$\Gamma_{el} \ \mathrm{[fm^{-1}]}$", "title": "Elastic scat. rate of gluons",       "data":data_dummy, "func": Gamma_el_g},
+{"filename": "DATA_qhat_q.dat",       
+	"xlabel": "$E_0$", 
+	"ylabel": "$\hat{q} \ \mathrm{[GeV^{3}}]$",
+	"title": "qhat of quarks",
+	"data":data_dummy, 
+	"func": qhat_q,
+	"description": "(t-ti)=1 (fm), T=0.3(GeV)"},
+{"filename": "DATA_qhat_g.dat",       
+	"xlabel": "$E_0$", 
+	"ylabel": "$\hat{q} \ \mathrm{[GeV^{3}]}$",      
+	"title": "qhat of gluons",                  
+	"data":data_dummy, 
+	"func": qhat_g,
+	"description": "(t-ti)=1 (fm), T=0.3(GeV)"},
+{"filename": "DATA_Gamma_inel_q.dat", 
+	"xlabel": "$E_0$", 
+	"ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", 
+	"title": "Inelastic scat. rate of quarks", 
+	"data":data_Gamma_inel_q, 
+	"func": Gamma_inel_q,
+	"description": "(t-ti)=1 (fm), T=0.3(GeV)"},
+{"filename": "DATA_Gamma_inel_g.dat", 
+	"xlabel": "$E_0$", 
+	"ylabel": "$\Gamma_{inel} \ \mathrm{[fm^{-1}]}$", 
+	"title": "Inelastic scat. rate of gluons",  
+	"data":data_Gamma_inel_g, 
+	"func": Gamma_inel_g,
+	"description": "(t-ti)=1 (fm), T=0.3(GeV)"},
+{"filename": "DATA_Gamma_el_q.dat", 
+	"xlabel": "$E_0$", 
+	"ylabel": "$\Gamma_{el} \ \mathrm{[fm^{-1}]}$", 
+	"title": "Elastic scat. rate of quarks",       
+	"data":data_dummy, 
+	"func": Gamma_el_q,
+	"description": "T=0.3(GeV)"},
+{"filename": "DATA_Gamma_el_g.dat", 
+	"xlabel": "$E_0$", 
+	"ylabel": "$\Gamma_{el} \ \mathrm{[fm^{-1}]}$", 
+	"title": "Elastic scat. rate of gluons",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "T=0.3(GeV)"},
+{"filename": "DATA_channel_10GeVqJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{q+a->b+c}/\Gamma^{q}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=10(GeV)"},
+{"filename": "DATA_channel_100GeVqJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{q+a->b+c}/\Gamma^{q}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=100(GeV)"},
+{"filename": "DATA_channel_1000GeVqJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{q+a->b+c}/\Gamma^{q}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=1000(GeV)"},
+{"filename": "DATA_channel_10GeVgJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{g+a->b+c}/\Gamma^{g}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=10(GeV)"},
+{"filename": "DATA_channel_100GeVgJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{g+a->b+c}/\Gamma^{g}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=100(GeV)"},
+{"filename": "DATA_channel_1000GeVgJET_vsT.dat", 
+	"xlabel": "$T (medium)$", 
+	"ylabel": "$ \Gamma_{g+a->b+c}/\Gamma^{g}_{el} $", 
+	"title": "Probability of each channel ",       
+	"data":data_dummy, 
+	"func": Gamma_el_g,
+	"description": "E=1000(GeV)"},
 ]
 
 
-if AnalyticalShow:
-	# Vectorize the function
-	Gamma_inel_q_vec = np.vectorize(Gamma_inel_q)
-	
-	# Create E and T mesh
-	E_vals = np.linspace(1.0, 200.0, 100)
-	T_vals = np.linspace(0.1, 0.6, 100)
-	E_grid, T_grid = np.meshgrid(E_vals, T_vals)
-	
-	# Compute Gamma_inel_q on the grid
-	Gamma_grid = Gamma_inel_q_vec(E_grid, T_grid)
-	
-	# Plotting
-	fig = plt.figure(figsize=(10, 7))
-	ax = fig.add_subplot(111, projection='3d')
-	surf = ax.plot_surface(E_grid, T_grid, Gamma_grid, cmap='viridis', edgecolor='none')
-	
-	ax.set_xlabel('E')
-	ax.set_ylabel('T')
-	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^q(E, T) \mathrm{fm^{-1}}$')
-	ax.set_title(r'3D Plot of $\Gamma_{\mathrm{inel}}^q(E, T)$')
-	fig.colorbar(surf, shrink=0.5, aspect=5)
-	ax.invert_xaxis()
-	ax.view_init(elev=30, azim=45)
-	
-	plt.savefig('AnalyticalGammaInel_q.pdf')
-	plt.clf()
-	
-	
-	# Vectorize the function
-	Gamma_inel_g_vec = np.vectorize(Gamma_inel_g)
-	
-	# Create E and T mesh
-	E_vals = np.linspace(1.0, 200.0, 100)
-	T_vals = np.linspace(0.1, 0.6, 100)
-	E_grid, T_grid = np.meshgrid(E_vals, T_vals)
-	
-	# Compute Gamma_inel_g on the grid
-	Gamma_grid = Gamma_inel_g_vec(E_grid, T_grid)
-	
-	# Plotting
-	fig = plt.figure(figsize=(10, 7))
-	ax = fig.add_subplot(111, projection='3d')
-	surf = ax.plot_surface(E_grid, T_grid, Gamma_grid, cmap='viridis', edgecolor='none')
-	
-	ax.set_xlabel('E')
-	ax.set_ylabel('T')
-	ax.set_zlabel(r'$\Gamma_{\mathrm{inel}}^g(E, T) \mathrm{fm^{-1}}$')
-	ax.set_title(r'3D Plot of $\Gamma_{\mathrm{inel}}^g(E, T)$')
-	fig.colorbar(surf, shrink=0.5, aspect=5)
-	ax.invert_xaxis()
-	ax.view_init(elev=30, azim=45)
-	
-	plt.savefig('AnalyticalGammaInel_g.pdf')
-	plt.clf()
-
-##
 n_files = len(data_files)
 
 fig, axes = plt.subplots(n_files, 1, figsize=(6, 4*n_files))  # One column, n_files rows
@@ -268,19 +289,74 @@ if n_files == 1:
 
 for ax, (i, data_info) in zip(axes, enumerate(data_files)):
     data = np.loadtxt(data_info["filename"])
-    x = data[:,0]
-    y = data[:,1]
-    ax.plot(x, y, marker='o', linestyle='-', ms=1.5, color="goldenrod", alpha=0.5, label="LBT")
-    if i<=1:
-           ax.plot(x, [data_info["func"](x_, T_fixed) for x_ in x], linestyle='dotted', lw=1, color="black", alpha=0.75, label="analytical")
+
+    #Reading DATAfiles.
+    if data_info["filename"]=="DATA_channel_10GeVqJET_vsT.dat" \
+    or data_info["filename"]=="DATA_channel_100GeVqJET_vsT.dat" \
+    or data_info["filename"]=="DATA_channel_1000GeVqJET_vsT.dat" \
+    or data_info["filename"]=="DATA_channel_10GeVgJET_vsT.dat" \
+    or data_info["filename"]=="DATA_channel_100GeVgJET_vsT.dat" \
+    or data_info["filename"]=="DATA_channel_1000GeVgJET_vsT.dat":
+         x = data[:,0]
+
+         if "qJET" in data_info["filename"]:
+	         CHANNEL=[
+	                 "qg2gq",
+	                 "qq2qq",
+	                 "qqbar2qqbar",
+	                 "qqbar2qqbar_flavor_exchange",
+	                 "qqbar2qqbar_flavor_kept",
+	                 "qqbar2gg"
+                 ]
+         else:
+	         CHANNEL=[
+	                 "gg2gg",
+	                 "qg2qg",
+	                 "gq2gq"
+                 ]
+         ls = itertools.cycle(('dotted', 'dashed', 'solid', 'dashdot')) 
+         mk = itertools.cycle(('s', 'o', 'x', '^', '*')) 
+         ax.set_ylim([1e-5, 1])
+         for ii in range(len(CHANNEL)):
+              y = data[:,ii+1]
+              ax.plot(x, y, marker=next(mk), linestyle=next(ls), ms=1.5, color=cm.Accent(ii/len(CHANNEL)), alpha=0.75, label=CHANNEL[ii])
+              ax.set_yscale("log")
     else:
-           ax.plot(data_info["data"]("x"), data_info["data"]("y"), linestyle='--', lw=1, color="black", alpha=0.75, label="Mathematica")
+         x = data[:,0]
+         y = data[:,1]
+         ax.plot(x, y, marker='o', linestyle='-', ms=1.5, color="goldenrod", alpha=0.5, label="LBT")
+
+    xpos = np.mean(x)
+    ypos = np.mean(y)
+
+    if data_info["filename"]=="DATA_qhat_q.dat" \
+	or data_info["filename"]=="DATA_qhat_g.dat":
+	    ax.plot(x, [data_info["func"](x_, T_fixed) for x_ in x], linestyle='dotted', lw=1, color="black", alpha=0.75, label="analytical")
+
+    elif data_info["filename"]=="DATA_Gamma_inel_q.dat" \
+        or data_info["filename"]=="DATA_Gamma_inel_g.dat" \
+        or data_info["filename"]=="DATA_Gamma_el_q.dat" \
+        or data_info["filename"]=="DATA_Gamma_el_g.dat":
+	    ax.plot(data_info["data"]("x"), data_info["data"]("y"), linestyle='--', lw=1, color="black", alpha=0.75, label="Mathematica")
+
+    #ax.text(ax.get_xlim()[0], ax.get_ylim()[0], data_info["description"], ha='left', va='bottom',
+    #		    bbox=dict(facecolor='white', edgecolor='white', alpha=0.7, boxstyle='round,pad=0.2'))
     ax.set_xlabel(data_info["xlabel"])
     ax.set_ylabel(data_info["ylabel"])
-    ax.set_title(data_info["title"])
+    ax.set_title(data_info["title"] + "  " + data_info["description"])
     ax.grid(True)
     ax.legend(fontsize='small', loc='best')
 
 plt.tight_layout()
 plt.savefig('TestPlots.pdf')
 plt.close()
+
+
+for info in data_files:
+    file_path = info["filename"]
+
+    if os.path.exists(file_path):
+	    os.remove(file_path)
+	    print(f"File '{file_path}' deleted successfully.")
+    else:
+	    print(f"ERROR: File '{file_path}' not found.")
